@@ -8,16 +8,16 @@ import (
 	"strings"
 
 	"connectrpc.com/connect"
+	"github.com/fikohc/memelo/common/helper"
+	commonservice "github.com/fikohc/memelo/common/service"
+	"github.com/fikohc/memelo/common/temp"
 	"github.com/google/uuid"
-	"github.com/weoses/memelo/common/helper"
-	commonservice "github.com/weoses/memelo/common/service"
-	"github.com/weoses/memelo/common/temp"
 
-	v1 "github.com/weoses/memelo/gen/proto/v1"
-	"github.com/weoses/memelo/gen/proto/v1/v1connect"
-	"github.com/weoses/memelo/storage-service/entity"
-	"github.com/weoses/memelo/storage-service/key"
-	"github.com/weoses/memelo/storage-service/service"
+	v1 "github.com/fikohc/memelo/gen/proto/v1"
+	"github.com/fikohc/memelo/gen/proto/v1/v1connect"
+	"github.com/fikohc/memelo/storage-service/entity"
+	"github.com/fikohc/memelo/storage-service/key"
+	"github.com/fikohc/memelo/storage-service/service"
 )
 
 // parseAccountIds parses a non-empty list of account id strings into uuid.UUIDs.

@@ -1,4 +1,4 @@
-module github.com/weoses/memelo/common
+module github.com/fikohc/memelo/common
 
 go 1.25.0
 

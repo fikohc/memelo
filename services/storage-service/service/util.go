@@ -1,8 +1,8 @@
 package service
 
 import (
-	"github.com/weoses/memelo/storage-service/entity"
-	"github.com/weoses/memelo/storage-service/storage"
+	"github.com/fikohc/memelo/storage-service/entity"
+	"github.com/fikohc/memelo/storage-service/storage"
 )
 
 type SavedArtifactType string

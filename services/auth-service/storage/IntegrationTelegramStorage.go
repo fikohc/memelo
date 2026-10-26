@@ -5,7 +5,7 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/weoses/memelo/auth-service/entity"
+	"github.com/fikohc/memelo/auth-service/entity"
 	"gorm.io/gorm"
 )
 

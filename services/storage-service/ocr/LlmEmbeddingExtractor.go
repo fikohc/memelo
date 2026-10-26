@@ -3,8 +3,8 @@ package ocr
 import (
 	"context"
 
-	"github.com/weoses/memelo/common/temp"
-	"github.com/weoses/memelo/storage-service/entity"
+	"github.com/fikohc/memelo/common/temp"
+	"github.com/fikohc/memelo/storage-service/entity"
 )
 
 type LlmEmbeddingExtractor interface {

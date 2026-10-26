@@ -7,10 +7,10 @@ import (
 	"log/slog"
 	"strings"
 
+	"github.com/fikohc/memelo/telegram-service/conf"
+	"github.com/fikohc/memelo/telegram-service/util"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	"github.com/google/uuid"
-	"github.com/weoses/memelo/telegram-service/conf"
-	"github.com/weoses/memelo/telegram-service/util"
 )
 
 const inlineDeletePrefix = "/delete"

@@ -4,9 +4,9 @@ import (
 	"log"
 	"log/slog"
 
-	"github.com/weoses/memelo/common/config"
-	"github.com/weoses/memelo/storage-service/app"
-	"github.com/weoses/memelo/storage-service/conf"
+	"github.com/fikohc/memelo/common/config"
+	"github.com/fikohc/memelo/storage-service/app"
+	"github.com/fikohc/memelo/storage-service/conf"
 	"go.uber.org/fx"
 	"go.uber.org/fx/fxevent"
 )

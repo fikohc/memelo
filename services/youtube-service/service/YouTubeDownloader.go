@@ -11,8 +11,8 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/weoses/memelo/common/temp"
-	"github.com/weoses/memelo/youtube-service/conf"
+	"github.com/fikohc/memelo/common/temp"
+	"github.com/fikohc/memelo/youtube-service/conf"
 )
 
 // DownloadCallback receives the raw video stream and its mime type and must

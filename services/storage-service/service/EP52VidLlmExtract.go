@@ -8,9 +8,9 @@ import (
 	"slices"
 	"sync"
 
-	"github.com/weoses/memelo/common/helper"
-	"github.com/weoses/memelo/storage-service/entity"
-	"github.com/weoses/memelo/storage-service/ocr"
+	"github.com/fikohc/memelo/common/helper"
+	"github.com/fikohc/memelo/storage-service/entity"
+	"github.com/fikohc/memelo/storage-service/ocr"
 )
 
 const VidLlmExtractKey = "VidLlmExtractPipelineStep"

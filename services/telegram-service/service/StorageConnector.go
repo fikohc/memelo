@@ -6,13 +6,13 @@ import (
 	"log/slog"
 	"net/http"
 
+	"github.com/fikohc/memelo/common/helper"
+	"github.com/fikohc/memelo/common/temp"
+	v1 "github.com/fikohc/memelo/gen/proto/v1"
+	"github.com/fikohc/memelo/gen/proto/v1/v1connect"
+	"github.com/fikohc/memelo/telegram-service/conf"
+	"github.com/fikohc/memelo/telegram-service/entity"
 	"github.com/google/uuid"
-	"github.com/weoses/memelo/common/helper"
-	"github.com/weoses/memelo/common/temp"
-	v1 "github.com/weoses/memelo/gen/proto/v1"
-	"github.com/weoses/memelo/gen/proto/v1/v1connect"
-	"github.com/weoses/memelo/telegram-service/conf"
-	"github.com/weoses/memelo/telegram-service/entity"
 )
 
 type StorageConnector interface {

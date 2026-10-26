@@ -7,10 +7,10 @@ import (
 	"os"
 	"testing"
 
+	"github.com/fikohc/memelo/auth-service/conf"
+	commonconfig "github.com/fikohc/memelo/common/config"
 	_ "github.com/lib/pq"
 	tcPostgres "github.com/testcontainers/testcontainers-go/modules/postgres"
-	"github.com/weoses/memelo/auth-service/conf"
-	commonconfig "github.com/weoses/memelo/common/config"
 )
 
 const (

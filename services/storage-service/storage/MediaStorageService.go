@@ -3,10 +3,10 @@ package storage
 import (
 	"context"
 
+	commonstorage "github.com/fikohc/memelo/common/storage"
+	"github.com/fikohc/memelo/common/temp"
+	"github.com/fikohc/memelo/storage-service/conf"
 	"github.com/google/uuid"
-	commonstorage "github.com/weoses/memelo/common/storage"
-	"github.com/weoses/memelo/common/temp"
-	"github.com/weoses/memelo/storage-service/conf"
 )
 
 type MediaType string

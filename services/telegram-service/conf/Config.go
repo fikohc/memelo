@@ -3,8 +3,8 @@ package conf
 import (
 	"fmt"
 
+	commonconfig "github.com/fikohc/memelo/common/config"
 	"github.com/spf13/viper"
-	commonconfig "github.com/weoses/memelo/common/config"
 )
 
 type TelegramConfig struct {

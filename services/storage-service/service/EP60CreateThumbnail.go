@@ -4,8 +4,8 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/weoses/memelo/common/temp"
-	"github.com/weoses/memelo/storage-service/entity"
+	"github.com/fikohc/memelo/common/temp"
+	"github.com/fikohc/memelo/storage-service/entity"
 )
 
 const CreateThumbnailKey = "CreateThumbnailPipelineStep"

@@ -9,13 +9,13 @@ import (
 	"testing"
 	"time"
 
+	commonconfig "github.com/fikohc/memelo/common/config"
+	commonservice "github.com/fikohc/memelo/common/service"
+	commonstorage "github.com/fikohc/memelo/common/storage"
+	"github.com/fikohc/memelo/ffmpeg-service/conf"
+	"github.com/fikohc/memelo/ffmpeg-service/entity"
+	"github.com/fikohc/memelo/ffmpeg-service/service"
 	tcMinio "github.com/testcontainers/testcontainers-go/modules/minio"
-	commonconfig "github.com/weoses/memelo/common/config"
-	commonservice "github.com/weoses/memelo/common/service"
-	commonstorage "github.com/weoses/memelo/common/storage"
-	"github.com/weoses/memelo/ffmpeg-service/conf"
-	"github.com/weoses/memelo/ffmpeg-service/entity"
-	"github.com/weoses/memelo/ffmpeg-service/service"
 )
 
 const testBucket = "test-temp"

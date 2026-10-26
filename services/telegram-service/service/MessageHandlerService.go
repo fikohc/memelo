@@ -9,13 +9,13 @@ import (
 	"strings"
 	"time"
 
+	"github.com/fikohc/memelo/common/helper"
+	commonservice "github.com/fikohc/memelo/common/service"
+	"github.com/fikohc/memelo/common/temp"
+	"github.com/fikohc/memelo/telegram-service/conf"
+	"github.com/fikohc/memelo/telegram-service/entity"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	"github.com/google/uuid"
-	"github.com/weoses/memelo/common/helper"
-	commonservice "github.com/weoses/memelo/common/service"
-	"github.com/weoses/memelo/common/temp"
-	"github.com/weoses/memelo/telegram-service/conf"
-	"github.com/weoses/memelo/telegram-service/entity"
 )
 
 type MessageHandlerService interface {

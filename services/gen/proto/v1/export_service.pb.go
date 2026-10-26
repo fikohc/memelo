@@ -307,7 +307,7 @@ const file_proto_v1_export_service_proto_rawDesc = "" +
 	"\x0fthumbnail_image\x18\x04 \x01(\v2\x1f.proto.memelo.v1.ExportImageDtoR\x0ethumbnailImage2g\n" +
 	"\rExportService\x12V\n" +
 	"\fExportImages\x12\x1e.proto.memelo.v1.ExportRequest\x1a$.proto.memelo.v1.ExportResponseChunk0\x01B\xae\x01\n" +
-	"\x13com.proto.memelo.v1B\x12ExportServiceProtoP\x01Z%github.com/weoses/memelo/gen/proto/v1\xa2\x02\x03PMX\xaa\x02\x0fProto.Memelo.V1\xca\x02\x0fProto\\Memelo\\V1\xe2\x02\x1bProto\\Memelo\\V1\\GPBMetadata\xea\x02\x11Proto::Memelo::V1b\x06proto3"
+	"\x13com.proto.memelo.v1B\x12ExportServiceProtoP\x01Z%github.com/fikohc/memelo/gen/proto/v1\xa2\x02\x03PMX\xaa\x02\x0fProto.Memelo.V1\xca\x02\x0fProto\\Memelo\\V1\xe2\x02\x1bProto\\Memelo\\V1\\GPBMetadata\xea\x02\x11Proto::Memelo::V1b\x06proto3"
 
 var (
 	file_proto_v1_export_service_proto_rawDescOnce sync.Once

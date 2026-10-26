@@ -17,12 +17,12 @@ import (
 	"github.com/elastic/go-elasticsearch/v8/typedapi/types/enums/operator"
 	"github.com/elastic/go-elasticsearch/v8/typedapi/types/enums/refresh"
 	"github.com/elastic/go-elasticsearch/v8/typedapi/types/enums/sortorder"
+	"github.com/fikohc/memelo/common/helper"
+	"github.com/fikohc/memelo/storage-service/conf"
+	"github.com/fikohc/memelo/storage-service/entity"
 	"github.com/gdexlab/go-render/render"
 	"github.com/go-playground/validator/v10"
 	"github.com/google/uuid"
-	"github.com/weoses/memelo/common/helper"
-	"github.com/weoses/memelo/storage-service/conf"
-	"github.com/weoses/memelo/storage-service/entity"
 )
 
 //go:embed migrations/metadata

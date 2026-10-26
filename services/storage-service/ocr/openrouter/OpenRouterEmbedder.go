@@ -9,11 +9,11 @@ import (
 
 	orsdk "github.com/OpenRouterTeam/go-sdk"
 	"github.com/OpenRouterTeam/go-sdk/models/operations"
-	"github.com/weoses/memelo/common/helper"
-	"github.com/weoses/memelo/common/temp"
-	"github.com/weoses/memelo/storage-service/conf"
-	"github.com/weoses/memelo/storage-service/entity"
-	"github.com/weoses/memelo/storage-service/ocr"
+	"github.com/fikohc/memelo/common/helper"
+	"github.com/fikohc/memelo/common/temp"
+	"github.com/fikohc/memelo/storage-service/conf"
+	"github.com/fikohc/memelo/storage-service/entity"
+	"github.com/fikohc/memelo/storage-service/ocr"
 )
 
 type OpenRouterEmbedder struct {

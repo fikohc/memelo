@@ -7,8 +7,8 @@ import (
 	"log/slog"
 	"sync"
 
-	"github.com/weoses/memelo/storage-service/entity"
-	"github.com/weoses/memelo/storage-service/ocr"
+	"github.com/fikohc/memelo/storage-service/entity"
+	"github.com/fikohc/memelo/storage-service/ocr"
 )
 
 const VidCalcEmbeddingsKey = "VidCalcEmbeddingsPipelineStep"

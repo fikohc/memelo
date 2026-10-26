@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 
-	"github.com/weoses/memelo/auth-service/storage"
+	"github.com/fikohc/memelo/auth-service/storage"
 )
 
 // AuthService is a generic cross-integration user lookup, used for

@@ -1,9 +1,9 @@
 package storage
 
 import (
-	commonservice "github.com/weoses/memelo/common/service"
-	commonstorage "github.com/weoses/memelo/common/storage"
-	"github.com/weoses/memelo/youtube-service/conf"
+	commonservice "github.com/fikohc/memelo/common/service"
+	commonstorage "github.com/fikohc/memelo/common/storage"
+	"github.com/fikohc/memelo/youtube-service/conf"
 )
 
 type TmpDataServiceS3OperationsAdapter commonstorage.S3OperationsAdapter

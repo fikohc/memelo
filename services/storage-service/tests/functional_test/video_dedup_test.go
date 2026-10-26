@@ -7,8 +7,8 @@ import (
 	"os/exec"
 	"testing"
 
-	v1 "github.com/weoses/memelo/gen/proto/v1"
-	"github.com/weoses/memelo/storage-service/entity"
+	v1 "github.com/fikohc/memelo/gen/proto/v1"
+	"github.com/fikohc/memelo/storage-service/entity"
 )
 
 // minimalMP4 generates a tiny 1-second H.264 MP4 with a seed-based colour so

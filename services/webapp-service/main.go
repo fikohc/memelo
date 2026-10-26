@@ -5,9 +5,9 @@ import (
 	"log"
 	"log/slog"
 
-	"github.com/weoses/memelo/common/config"
-	"github.com/weoses/memelo/webapp/app"
-	"github.com/weoses/memelo/webapp/conf"
+	"github.com/fikohc/memelo/common/config"
+	"github.com/fikohc/memelo/webapp/app"
+	"github.com/fikohc/memelo/webapp/conf"
 	"go.uber.org/fx"
 	"go.uber.org/fx/fxevent"
 )

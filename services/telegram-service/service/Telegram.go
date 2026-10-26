@@ -8,9 +8,9 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/fikohc/memelo/common/helper"
+	"github.com/fikohc/memelo/telegram-service/conf"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
-	"github.com/weoses/memelo/common/helper"
-	"github.com/weoses/memelo/telegram-service/conf"
 )
 
 const (

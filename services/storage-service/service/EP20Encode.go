@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/weoses/memelo/storage-service/entity"
+	"github.com/fikohc/memelo/storage-service/entity"
 )
 
 const EncodeOriginalKey = "EncodeOriginalPipelineStep"

@@ -4,7 +4,7 @@
 # from a SOPS-encrypted file at install time (see secrets/README.md).
 
 image:
-  registry: ghcr.io/weoses
+  registry: ghcr.io/fikohc
   # Overridden per-deploy, e.g. `--set image.tag=v1.2.3` (mirrors the old
   # Ansible `release_version` extra-var).
   tag: latest

@@ -5,7 +5,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/weoses/memelo/ffmpeg-service/conf"
+	"github.com/fikohc/memelo/ffmpeg-service/conf"
 )
 
 func TestBuildCmd(t *testing.T) {

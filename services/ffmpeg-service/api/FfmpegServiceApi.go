@@ -6,9 +6,9 @@ import (
 	"log/slog"
 
 	"connectrpc.com/connect"
-	"github.com/weoses/memelo/ffmpeg-service/entity"
-	"github.com/weoses/memelo/ffmpeg-service/service"
-	v1 "github.com/weoses/memelo/gen/proto/v1"
+	"github.com/fikohc/memelo/ffmpeg-service/entity"
+	"github.com/fikohc/memelo/ffmpeg-service/service"
+	v1 "github.com/fikohc/memelo/gen/proto/v1"
 )
 
 type FfmpegServiceApi struct {

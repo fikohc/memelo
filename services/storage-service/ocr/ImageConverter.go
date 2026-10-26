@@ -7,8 +7,8 @@ import (
 	"github.com/h2non/bimg"
 	"github.com/pkg/errors"
 
-	"github.com/weoses/memelo/common/temp"
-	"github.com/weoses/memelo/storage-service/conf"
+	"github.com/fikohc/memelo/common/temp"
+	"github.com/fikohc/memelo/storage-service/conf"
 )
 
 type ImageConveter interface {

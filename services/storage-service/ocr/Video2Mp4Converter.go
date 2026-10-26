@@ -3,7 +3,7 @@ package ocr
 import (
 	"context"
 
-	"github.com/weoses/memelo/common/temp"
+	"github.com/fikohc/memelo/common/temp"
 )
 
 type Video2Mp4Converter interface {

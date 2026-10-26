@@ -11,14 +11,14 @@ import (
 	"strings"
 	"time"
 
+	commonconfig "github.com/fikohc/memelo/common/config"
+	commonservice "github.com/fikohc/memelo/common/service"
+	"github.com/fikohc/memelo/common/storage"
+	"github.com/fikohc/memelo/webapp/api"
+	"github.com/fikohc/memelo/webapp/conf"
+	"github.com/fikohc/memelo/webapp/service"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
-	commonconfig "github.com/weoses/memelo/common/config"
-	commonservice "github.com/weoses/memelo/common/service"
-	"github.com/weoses/memelo/common/storage"
-	"github.com/weoses/memelo/webapp/api"
-	"github.com/weoses/memelo/webapp/conf"
-	"github.com/weoses/memelo/webapp/service"
 	"go.uber.org/fx"
 )
 

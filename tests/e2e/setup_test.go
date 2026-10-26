@@ -10,10 +10,10 @@ import (
 	"testing"
 
 	"connectrpc.com/connect"
+	v1 "github.com/fikohc/memelo/gen/proto/v1"
+	"github.com/fikohc/memelo/gen/proto/v1/v1connect"
 	"github.com/joho/godotenv"
 	"github.com/spf13/viper"
-	v1 "github.com/weoses/memelo/gen/proto/v1"
-	"github.com/weoses/memelo/gen/proto/v1/v1connect"
 )
 
 const testAccountId = "00000000-0000-0000-0000-000000000e2e"

@@ -1,4 +1,4 @@
-module github.com/weoses/memelo/telegram-service
+module github.com/fikohc/memelo/telegram-service
 
 go 1.25.0
 
@@ -7,8 +7,8 @@ require (
 	github.com/google/go-cmp v0.7.0
 	github.com/google/uuid v1.6.0
 	github.com/spf13/viper v1.21.0
-	github.com/weoses/memelo/common v0.0.0-00010101000000-000000000000
-	github.com/weoses/memelo/gen v0.0.0-00010101000000-000000000000
+	github.com/fikohc/memelo/common v0.0.0-00010101000000-000000000000
+	github.com/fikohc/memelo/gen v0.0.0-00010101000000-000000000000
 )
 
 require (
@@ -49,6 +49,6 @@ require (
 )
 
 replace (
-	github.com/weoses/memelo/common => ../common
-	github.com/weoses/memelo/gen => ../gen
+	github.com/fikohc/memelo/common => ../common
+	github.com/fikohc/memelo/gen => ../gen
 )

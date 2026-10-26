@@ -1,4 +1,4 @@
-module github.com/weoses/memelo/ffmpeg-service
+module github.com/fikohc/memelo/ffmpeg-service
 
 go 1.26
 
@@ -8,8 +8,8 @@ require (
 	github.com/google/uuid v1.6.0
 	github.com/spf13/viper v1.21.0
 	github.com/testcontainers/testcontainers-go/modules/minio v0.43.0
-	github.com/weoses/memelo/common v0.0.0-00010101000000-000000000000
-	github.com/weoses/memelo/gen v0.0.0-00010101000000-000000000000
+	github.com/fikohc/memelo/common v0.0.0-00010101000000-000000000000
+	github.com/fikohc/memelo/gen v0.0.0-00010101000000-000000000000
 	go.uber.org/fx v1.23.0
 	golang.org/x/net v0.53.0
 )
@@ -90,6 +90,6 @@ require (
 )
 
 replace (
-	github.com/weoses/memelo/common => ../common
-	github.com/weoses/memelo/gen => ../gen
+	github.com/fikohc/memelo/common => ../common
+	github.com/fikohc/memelo/gen => ../gen
 )

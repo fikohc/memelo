@@ -4,7 +4,7 @@ import (
 	"context"
 	"time"
 
-	"github.com/weoses/memelo/common/temp"
+	"github.com/fikohc/memelo/common/temp"
 )
 
 type VideoSlice struct {

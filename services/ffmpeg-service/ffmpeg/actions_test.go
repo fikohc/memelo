@@ -9,8 +9,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/weoses/memelo/common/temp"
-	"github.com/weoses/memelo/ffmpeg-service/conf"
+	"github.com/fikohc/memelo/common/temp"
+	"github.com/fikohc/memelo/ffmpeg-service/conf"
 )
 
 func testCfg() *conf.FfmpegConfig {

@@ -17,7 +17,7 @@ import (
 	elasticsearch8 "github.com/elastic/go-elasticsearch/v8"
 	"github.com/elastic/go-elasticsearch/v8/typedapi/types"
 	"github.com/elastic/go-elasticsearch/v8/typedapi/types/enums/refresh"
-	"github.com/weoses/memelo/common/helper"
+	"github.com/fikohc/memelo/common/helper"
 )
 
 const MigrationHistoryIndex = "elastic-migrations-history"

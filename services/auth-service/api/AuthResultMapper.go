@@ -1,9 +1,9 @@
 package api
 
 import (
-	v1 "github.com/weoses/memelo/gen/proto/v1"
+	v1 "github.com/fikohc/memelo/gen/proto/v1"
 
-	"github.com/weoses/memelo/auth-service/service"
+	"github.com/fikohc/memelo/auth-service/service"
 )
 
 func toProtoAuthResult(r *service.AuthResult) *v1.AuthResult {

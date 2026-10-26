@@ -8,9 +8,9 @@ import (
 	"strings"
 	"time"
 
-	v1 "github.com/weoses/memelo/gen/proto/v1"
-	"github.com/weoses/memelo/gen/proto/v1/v1connect"
-	"github.com/weoses/memelo/webapp/conf"
+	v1 "github.com/fikohc/memelo/gen/proto/v1"
+	"github.com/fikohc/memelo/gen/proto/v1/v1connect"
+	"github.com/fikohc/memelo/webapp/conf"
 )
 
 type MemeResult struct {

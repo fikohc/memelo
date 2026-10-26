@@ -6,8 +6,8 @@ import (
 	"net"
 	"time"
 
-	"github.com/weoses/memelo/auth-service/app"
-	"github.com/weoses/memelo/auth-service/conf"
+	"github.com/fikohc/memelo/auth-service/app"
+	"github.com/fikohc/memelo/auth-service/conf"
 	"go.uber.org/fx"
 )
 

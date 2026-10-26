@@ -4,10 +4,10 @@ import (
 	"context"
 	"log/slog"
 
+	"github.com/fikohc/memelo/common/helper"
+	"github.com/fikohc/memelo/common/temp"
+	"github.com/fikohc/memelo/storage-service/entity"
 	"github.com/google/uuid"
-	"github.com/weoses/memelo/common/helper"
-	"github.com/weoses/memelo/common/temp"
-	"github.com/weoses/memelo/storage-service/entity"
 )
 
 type ExtractPipelineStep interface {

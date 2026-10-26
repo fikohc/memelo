@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/weoses/memelo/auth-service/storage"
+	"github.com/fikohc/memelo/auth-service/storage"
 )
 
 type AuthStatus int

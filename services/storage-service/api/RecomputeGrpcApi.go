@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"log/slog"
 
-	v1 "github.com/weoses/memelo/gen/proto/v1"
-	"github.com/weoses/memelo/gen/proto/v1/v1connect"
-	"github.com/weoses/memelo/storage-service/service"
+	v1 "github.com/fikohc/memelo/gen/proto/v1"
+	"github.com/fikohc/memelo/gen/proto/v1/v1connect"
+	"github.com/fikohc/memelo/storage-service/service"
 )
 
 type RecomputeGrpcApiImpl struct {

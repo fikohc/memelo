@@ -4,8 +4,8 @@ import (
 	"fmt"
 
 	elasticsearch8 "github.com/elastic/go-elasticsearch/v8"
+	commonconfig "github.com/fikohc/memelo/common/config"
 	"github.com/spf13/viper"
-	commonconfig "github.com/weoses/memelo/common/config"
 )
 
 type CommonExtractingConfig struct {

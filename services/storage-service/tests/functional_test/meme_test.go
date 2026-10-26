@@ -9,8 +9,8 @@ import (
 	"net/http"
 	"testing"
 
-	v1 "github.com/weoses/memelo/gen/proto/v1"
-	"github.com/weoses/memelo/storage-service/ocr"
+	v1 "github.com/fikohc/memelo/gen/proto/v1"
+	"github.com/fikohc/memelo/storage-service/ocr"
 )
 
 // minimalJPEG creates a small solid-color JPEG. Pass a seed to get distinct

@@ -534,7 +534,7 @@ const file_proto_v1_recompute_service_proto_rawDesc = "" +
 	"\x11StartRecomputeJob\x12!.proto.memelo.v1.RecomputeRequest\x1a\x1d.proto.memelo.v1.RecomputeJob\x12\\\n" +
 	"\x15StartRecomputeJobById\x12$.proto.memelo.v1.RecomputeOneRequest\x1a\x1d.proto.memelo.v1.RecomputeJob\x12[\n" +
 	"\x15GetRecomputeJobStatus\x12\x1d.proto.memelo.v1.RecomputeJob\x1a#.proto.memelo.v1.RecomputeJobStatusB\xb1\x01\n" +
-	"\x13com.proto.memelo.v1B\x15RecomputeServiceProtoP\x01Z%github.com/weoses/memelo/gen/proto/v1\xa2\x02\x03PMX\xaa\x02\x0fProto.Memelo.V1\xca\x02\x0fProto\\Memelo\\V1\xe2\x02\x1bProto\\Memelo\\V1\\GPBMetadata\xea\x02\x11Proto::Memelo::V1b\x06proto3"
+	"\x13com.proto.memelo.v1B\x15RecomputeServiceProtoP\x01Z%github.com/fikohc/memelo/gen/proto/v1\xa2\x02\x03PMX\xaa\x02\x0fProto.Memelo.V1\xca\x02\x0fProto\\Memelo\\V1\xe2\x02\x1bProto\\Memelo\\V1\\GPBMetadata\xea\x02\x11Proto::Memelo::V1b\x06proto3"
 
 var (
 	file_proto_v1_recompute_service_proto_rawDescOnce sync.Once

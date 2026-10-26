@@ -6,10 +6,10 @@ import (
 	"log/slog"
 	"net/http"
 
-	v1 "github.com/weoses/memelo/gen/proto/v1"
-	"github.com/weoses/memelo/gen/proto/v1/v1connect"
-	"github.com/weoses/memelo/telegram-service/conf"
-	"github.com/weoses/memelo/telegram-service/entity"
+	v1 "github.com/fikohc/memelo/gen/proto/v1"
+	"github.com/fikohc/memelo/gen/proto/v1/v1connect"
+	"github.com/fikohc/memelo/telegram-service/conf"
+	"github.com/fikohc/memelo/telegram-service/entity"
 )
 
 type YouTubeConnector interface {

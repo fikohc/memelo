@@ -5,11 +5,11 @@ import (
 	"fmt"
 	"log/slog"
 
+	"github.com/fikohc/memelo/storage-service/conf"
+	"github.com/fikohc/memelo/storage-service/entity"
+	"github.com/fikohc/memelo/storage-service/ocr"
+	"github.com/fikohc/memelo/storage-service/storage"
 	"github.com/google/uuid"
-	"github.com/weoses/memelo/storage-service/conf"
-	"github.com/weoses/memelo/storage-service/entity"
-	"github.com/weoses/memelo/storage-service/ocr"
-	"github.com/weoses/memelo/storage-service/storage"
 )
 
 type HybridSearcher struct {

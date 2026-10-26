@@ -121,7 +121,7 @@ const file_proto_v1_integration_telegram_service_proto_rawDesc = "" +
 	"\x06result\x18\x01 \x01(\v2\x1b.proto.memelo.v1.AuthResultR\x06result2\x80\x01\n" +
 	"\x1aIntegrationTelegramService\x12b\n" +
 	"\tAuthorize\x12).proto.memelo.v1.TelegramAuthorizeRequest\x1a*.proto.memelo.v1.TelegramAuthorizeResponseB\xbb\x01\n" +
-	"\x13com.proto.memelo.v1B\x1fIntegrationTelegramServiceProtoP\x01Z%github.com/weoses/memelo/gen/proto/v1\xa2\x02\x03PMX\xaa\x02\x0fProto.Memelo.V1\xca\x02\x0fProto\\Memelo\\V1\xe2\x02\x1bProto\\Memelo\\V1\\GPBMetadata\xea\x02\x11Proto::Memelo::V1b\x06proto3"
+	"\x13com.proto.memelo.v1B\x1fIntegrationTelegramServiceProtoP\x01Z%github.com/fikohc/memelo/gen/proto/v1\xa2\x02\x03PMX\xaa\x02\x0fProto.Memelo.V1\xca\x02\x0fProto\\Memelo\\V1\xe2\x02\x1bProto\\Memelo\\V1\\GPBMetadata\xea\x02\x11Proto::Memelo::V1b\x06proto3"
 
 var (
 	file_proto_v1_integration_telegram_service_proto_rawDescOnce sync.Once

@@ -7,11 +7,11 @@ import (
 	"regexp"
 	"strings"
 
+	"github.com/fikohc/memelo/common/helper"
+	"github.com/fikohc/memelo/telegram-service/conf"
+	"github.com/fikohc/memelo/telegram-service/entity"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	"github.com/google/uuid"
-	"github.com/weoses/memelo/common/helper"
-	"github.com/weoses/memelo/telegram-service/conf"
-	"github.com/weoses/memelo/telegram-service/entity"
 )
 
 var typeTagRe = regexp.MustCompile(`(?i)\s*-type:(image|video)\s*`)

@@ -8,16 +8,16 @@ import (
 	"time"
 
 	"connectrpc.com/connect"
-	"github.com/weoses/memelo/gen/proto/v1/v1connect"
+	"github.com/fikohc/memelo/gen/proto/v1/v1connect"
 	"go.uber.org/fx"
 	"golang.org/x/net/http2"
 	"golang.org/x/net/http2/h2c"
 
-	"github.com/weoses/memelo/auth-service/api"
-	"github.com/weoses/memelo/auth-service/conf"
-	"github.com/weoses/memelo/auth-service/middleware"
-	"github.com/weoses/memelo/auth-service/service"
-	"github.com/weoses/memelo/auth-service/storage"
+	"github.com/fikohc/memelo/auth-service/api"
+	"github.com/fikohc/memelo/auth-service/conf"
+	"github.com/fikohc/memelo/auth-service/middleware"
+	"github.com/fikohc/memelo/auth-service/service"
+	"github.com/fikohc/memelo/auth-service/storage"
 )
 
 func Module() fx.Option {

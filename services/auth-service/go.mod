@@ -1,4 +1,4 @@
-module github.com/weoses/memelo/auth-service
+module github.com/fikohc/memelo/auth-service
 
 go 1.25.0
 
@@ -8,8 +8,8 @@ require (
 	github.com/lib/pq v1.10.9
 	github.com/spf13/viper v1.21.0
 	github.com/testcontainers/testcontainers-go/modules/postgres v0.42.0
-	github.com/weoses/memelo/common v0.0.0-00010101000000-000000000000
-	github.com/weoses/memelo/gen v0.0.0-00010101000000-000000000000
+	github.com/fikohc/memelo/common v0.0.0-00010101000000-000000000000
+	github.com/fikohc/memelo/gen v0.0.0-00010101000000-000000000000
 	go.uber.org/fx v1.23.0
 	golang.org/x/crypto v0.54.0
 	golang.org/x/net v0.56.0
@@ -95,6 +95,6 @@ require (
 )
 
 replace (
-	github.com/weoses/memelo/common => ../common
-	github.com/weoses/memelo/gen => ../gen
+	github.com/fikohc/memelo/common => ../common
+	github.com/fikohc/memelo/gen => ../gen
 )

@@ -464,7 +464,7 @@ const file_proto_v1_common_proto_rawDesc = "" +
 	"\n" +
 	"account_id\x18\x01 \x01(\tR\taccountId\"\x13\n" +
 	"\x11DeleteAllResponseB\xa7\x01\n" +
-	"\x13com.proto.memelo.v1B\vCommonProtoP\x01Z%github.com/weoses/memelo/gen/proto/v1\xa2\x02\x03PMX\xaa\x02\x0fProto.Memelo.V1\xca\x02\x0fProto\\Memelo\\V1\xe2\x02\x1bProto\\Memelo\\V1\\GPBMetadata\xea\x02\x11Proto::Memelo::V1b\x06proto3"
+	"\x13com.proto.memelo.v1B\vCommonProtoP\x01Z%github.com/fikohc/memelo/gen/proto/v1\xa2\x02\x03PMX\xaa\x02\x0fProto.Memelo.V1\xca\x02\x0fProto\\Memelo\\V1\xe2\x02\x1bProto\\Memelo\\V1\\GPBMetadata\xea\x02\x11Proto::Memelo::V1b\x06proto3"
 
 var (
 	file_proto_v1_common_proto_rawDescOnce sync.Once

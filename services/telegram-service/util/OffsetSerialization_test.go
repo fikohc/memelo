@@ -4,8 +4,8 @@ import (
 	"reflect"
 	"testing"
 
+	"github.com/fikohc/memelo/telegram-service/entity"
 	"github.com/google/go-cmp/cmp"
-	"github.com/weoses/memelo/telegram-service/entity"
 )
 
 func TestParseOffset(t *testing.T) {

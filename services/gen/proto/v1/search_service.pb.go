@@ -884,7 +884,7 @@ const file_proto_v1_search_service_proto_rawDesc = "" +
 	"UpdateMeme\x12\".proto.memelo.v1.UpdateMemeRequest\x1a#.proto.memelo.v1.UpdateMemeResponse\x12R\n" +
 	"\tDeleteAll\x12!.proto.memelo.v1.DeleteAllRequest\x1a\".proto.memelo.v1.DeleteAllResponse\x12^\n" +
 	"\rGetRandomMeme\x12%.proto.memelo.v1.GetRandomMemeRequest\x1a&.proto.memelo.v1.GetRandomMemeResponseB\xae\x01\n" +
-	"\x13com.proto.memelo.v1B\x12SearchServiceProtoP\x01Z%github.com/weoses/memelo/gen/proto/v1\xa2\x02\x03PMX\xaa\x02\x0fProto.Memelo.V1\xca\x02\x0fProto\\Memelo\\V1\xe2\x02\x1bProto\\Memelo\\V1\\GPBMetadata\xea\x02\x11Proto::Memelo::V1b\x06proto3"
+	"\x13com.proto.memelo.v1B\x12SearchServiceProtoP\x01Z%github.com/fikohc/memelo/gen/proto/v1\xa2\x02\x03PMX\xaa\x02\x0fProto.Memelo.V1\xca\x02\x0fProto\\Memelo\\V1\xe2\x02\x1bProto\\Memelo\\V1\\GPBMetadata\xea\x02\x11Proto::Memelo::V1b\x06proto3"
 
 var (
 	file_proto_v1_search_service_proto_rawDescOnce sync.Once

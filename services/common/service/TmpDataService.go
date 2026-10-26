@@ -6,9 +6,9 @@ import (
 	"io"
 	"strings"
 
+	"github.com/fikohc/memelo/common/storage"
+	"github.com/fikohc/memelo/common/temp"
 	"github.com/google/uuid"
-	"github.com/weoses/memelo/common/storage"
-	"github.com/weoses/memelo/common/temp"
 )
 
 type UploadUrlResult struct {

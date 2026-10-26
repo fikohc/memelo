@@ -5,10 +5,10 @@ import (
 	"fmt"
 	"time"
 
-	commonservice "github.com/weoses/memelo/common/service"
-	"github.com/weoses/memelo/storage-service/conf"
-	"github.com/weoses/memelo/storage-service/entity"
-	"github.com/weoses/memelo/storage-service/ocr"
+	commonservice "github.com/fikohc/memelo/common/service"
+	"github.com/fikohc/memelo/storage-service/conf"
+	"github.com/fikohc/memelo/storage-service/entity"
+	"github.com/fikohc/memelo/storage-service/ocr"
 )
 
 const (

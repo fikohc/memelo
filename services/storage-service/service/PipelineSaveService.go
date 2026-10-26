@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"log/slog"
 
-	"github.com/weoses/memelo/storage-service/entity"
-	storage2 "github.com/weoses/memelo/storage-service/storage"
+	"github.com/fikohc/memelo/storage-service/entity"
+	storage2 "github.com/fikohc/memelo/storage-service/storage"
 )
 
 type PipelineSaveConfig struct {

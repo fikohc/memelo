@@ -9,10 +9,10 @@ import (
 	"testing"
 
 	"connectrpc.com/connect"
-	"github.com/weoses/memelo/ffmpeg-service/api"
-	"github.com/weoses/memelo/ffmpeg-service/entity"
-	v1 "github.com/weoses/memelo/gen/proto/v1"
-	"github.com/weoses/memelo/gen/proto/v1/v1connect"
+	"github.com/fikohc/memelo/ffmpeg-service/api"
+	"github.com/fikohc/memelo/ffmpeg-service/entity"
+	v1 "github.com/fikohc/memelo/gen/proto/v1"
+	"github.com/fikohc/memelo/gen/proto/v1/v1connect"
 )
 
 // fakeJobService is an in-memory FfmpegJobService double so this test exercises

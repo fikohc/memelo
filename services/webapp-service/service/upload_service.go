@@ -6,9 +6,9 @@ import (
 	"log/slog"
 	"time"
 
+	commonservice "github.com/fikohc/memelo/common/service"
+	"github.com/fikohc/memelo/webapp/conf"
 	"github.com/golang-jwt/jwt/v5"
-	commonservice "github.com/weoses/memelo/common/service"
-	"github.com/weoses/memelo/webapp/conf"
 )
 
 type GetUploadUrlResult struct {

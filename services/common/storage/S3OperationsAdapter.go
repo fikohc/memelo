@@ -8,12 +8,12 @@ import (
 	"strings"
 	"time"
 
+	"github.com/fikohc/memelo/common/temp"
 	"github.com/minio/minio-go/v7"
 	"github.com/minio/minio-go/v7/pkg/credentials"
-	"github.com/weoses/memelo/common/temp"
 
-	"github.com/weoses/memelo/common/config"
-	"github.com/weoses/memelo/common/helper"
+	"github.com/fikohc/memelo/common/config"
+	"github.com/fikohc/memelo/common/helper"
 )
 
 type SaveOptions func(options *SaveOptionsParameter)

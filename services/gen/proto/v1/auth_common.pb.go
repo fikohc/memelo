@@ -155,7 +155,7 @@ const file_proto_v1_auth_common_proto_rawDesc = "" +
 	"\x17AUTH_STATUS_UNSPECIFIED\x10\x00\x12\x12\n" +
 	"\x0eAUTH_STATUS_OK\x10\x01\x12\x19\n" +
 	"\x15AUTH_STATUS_NOT_FOUND\x10\x02B\xab\x01\n" +
-	"\x13com.proto.memelo.v1B\x0fAuthCommonProtoP\x01Z%github.com/weoses/memelo/gen/proto/v1\xa2\x02\x03PMX\xaa\x02\x0fProto.Memelo.V1\xca\x02\x0fProto\\Memelo\\V1\xe2\x02\x1bProto\\Memelo\\V1\\GPBMetadata\xea\x02\x11Proto::Memelo::V1b\x06proto3"
+	"\x13com.proto.memelo.v1B\x0fAuthCommonProtoP\x01Z%github.com/fikohc/memelo/gen/proto/v1\xa2\x02\x03PMX\xaa\x02\x0fProto.Memelo.V1\xca\x02\x0fProto\\Memelo\\V1\xe2\x02\x1bProto\\Memelo\\V1\\GPBMetadata\xea\x02\x11Proto::Memelo::V1b\x06proto3"
 
 var (
 	file_proto_v1_auth_common_proto_rawDescOnce sync.Once

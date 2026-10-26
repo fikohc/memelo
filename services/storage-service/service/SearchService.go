@@ -6,8 +6,8 @@ import (
 	"log/slog"
 	"slices"
 
+	"github.com/fikohc/memelo/storage-service/entity"
 	"github.com/google/uuid"
-	"github.com/weoses/memelo/storage-service/entity"
 )
 
 type SearchServiceResponse struct {

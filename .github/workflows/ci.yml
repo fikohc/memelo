@@ -57,7 +57,7 @@ jobs:
           push: true
           file: Dockerfile-${{matrix.service}}-service
           tags: |
-            ghcr.io/weoses/${{matrix.service}}-service:${{ github.ref_name }}
-            ghcr.io/weoses/${{matrix.service}}-service:latest
-          cache-from: type=registry,ref=ghcr.io/weoses/${{matrix.service}}-service:latest
+            ghcr.io/fikohc/${{matrix.service}}-service:${{ github.ref_name }}
+            ghcr.io/fikohc/${{matrix.service}}-service:latest
+          cache-from: type=registry,ref=ghcr.io/fikohc/${{matrix.service}}-service:latest
           cache-to: type=inline

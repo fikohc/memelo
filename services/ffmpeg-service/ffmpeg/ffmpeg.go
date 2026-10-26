@@ -5,7 +5,7 @@ import (
 	"os/exec"
 	"strconv"
 
-	"github.com/weoses/memelo/ffmpeg-service/conf"
+	"github.com/fikohc/memelo/ffmpeg-service/conf"
 )
 
 // buildCmd constructs an exec.Cmd for ffmpeg, applying optional thread limit

@@ -1,4 +1,4 @@
-module github.com/weoses/memelo/webapp
+module github.com/fikohc/memelo/webapp
 
 go 1.25.0
 
@@ -6,8 +6,8 @@ require (
 	github.com/golang-jwt/jwt/v5 v5.3.1
 	github.com/labstack/echo/v4 v4.13.3
 	github.com/spf13/viper v1.21.0
-	github.com/weoses/memelo/common v0.0.0-00010101000000-000000000000
-	github.com/weoses/memelo/gen v0.0.0-00010101000000-000000000000
+	github.com/fikohc/memelo/common v0.0.0-00010101000000-000000000000
+	github.com/fikohc/memelo/gen v0.0.0-00010101000000-000000000000
 	go.uber.org/fx v1.23.0
 )
 
@@ -49,6 +49,6 @@ require (
 )
 
 replace (
-	github.com/weoses/memelo/common => ../common
-	github.com/weoses/memelo/gen => ../gen
+	github.com/fikohc/memelo/common => ../common
+	github.com/fikohc/memelo/gen => ../gen
 )

@@ -10,9 +10,9 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/weoses/memelo/common/helper"
-	"github.com/weoses/memelo/common/temp"
-	"github.com/weoses/memelo/storage-service/ocr"
+	"github.com/fikohc/memelo/common/helper"
+	"github.com/fikohc/memelo/common/temp"
+	"github.com/fikohc/memelo/storage-service/ocr"
 )
 
 // The functional test suite exercises the real video pipeline end to end, so

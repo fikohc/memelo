@@ -1,23 +1,23 @@
 package api
 
-import "github.com/weoses/memelo/webapp/service"
+import "github.com/fikohc/memelo/webapp/service"
 
 type MemeResponse struct {
-	Id              string   `json:"id"`
-	Caption         string   `json:"caption"`
-	Type            string   `json:"type"`
-	OcrResult       string   `json:"ocr_result"`
-	OnScreenText    string   `json:"on_screen_text"`
-	AudioTranscript string   `json:"audio_transcript"`
-	AudioTrack      string   `json:"audio_track"`
-	ThumbnailURL    string   `json:"thumbnail_url"`
-	ThumbnailW      int32    `json:"thumbnail_w"`
-	ThumbnailH      int32    `json:"thumbnail_h"`
-	OriginalURL     string   `json:"original_url"`
-	OriginalW       int32    `json:"original_w"`
-	OriginalH       int32    `json:"original_h"`
-	Status          string   `json:"status"`
-	Edited          bool     `json:"edited"`
+	Id              string `json:"id"`
+	Caption         string `json:"caption"`
+	Type            string `json:"type"`
+	OcrResult       string `json:"ocr_result"`
+	OnScreenText    string `json:"on_screen_text"`
+	AudioTranscript string `json:"audio_transcript"`
+	AudioTrack      string `json:"audio_track"`
+	ThumbnailURL    string `json:"thumbnail_url"`
+	ThumbnailW      int32  `json:"thumbnail_w"`
+	ThumbnailH      int32  `json:"thumbnail_h"`
+	OriginalURL     string `json:"original_url"`
+	OriginalW       int32  `json:"original_w"`
+	OriginalH       int32  `json:"original_h"`
+	Status          string `json:"status"`
+	Edited          bool   `json:"edited"`
 }
 
 type PaginationResponse struct {

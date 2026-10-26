@@ -5,10 +5,10 @@ import (
 	"fmt"
 	"log/slog"
 
+	"github.com/fikohc/memelo/common/helper"
+	"github.com/fikohc/memelo/storage-service/entity"
+	storage2 "github.com/fikohc/memelo/storage-service/storage"
 	"github.com/google/uuid"
-	"github.com/weoses/memelo/common/helper"
-	"github.com/weoses/memelo/storage-service/entity"
-	storage2 "github.com/weoses/memelo/storage-service/storage"
 )
 
 const exportPageSize = 100

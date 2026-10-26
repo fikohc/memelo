@@ -7,11 +7,11 @@ import (
 	"net"
 	"net/http"
 
+	"github.com/fikohc/memelo/common/config"
+	"github.com/fikohc/memelo/telegram-service/conf"
+	"github.com/fikohc/memelo/telegram-service/service"
+	tgstorage "github.com/fikohc/memelo/telegram-service/storage"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
-	"github.com/weoses/memelo/common/config"
-	"github.com/weoses/memelo/telegram-service/conf"
-	"github.com/weoses/memelo/telegram-service/service"
-	tgstorage "github.com/weoses/memelo/telegram-service/storage"
 	"go.uber.org/fx"
 	"go.uber.org/fx/fxevent"
 )

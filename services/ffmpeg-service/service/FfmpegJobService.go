@@ -7,13 +7,13 @@ import (
 	"time"
 
 	"github.com/bluele/gcache"
+	"github.com/fikohc/memelo/common/helper"
+	commonservice "github.com/fikohc/memelo/common/service"
+	"github.com/fikohc/memelo/common/temp"
+	"github.com/fikohc/memelo/ffmpeg-service/conf"
+	"github.com/fikohc/memelo/ffmpeg-service/entity"
+	"github.com/fikohc/memelo/ffmpeg-service/ffmpeg"
 	"github.com/google/uuid"
-	"github.com/weoses/memelo/common/helper"
-	commonservice "github.com/weoses/memelo/common/service"
-	"github.com/weoses/memelo/common/temp"
-	"github.com/weoses/memelo/ffmpeg-service/conf"
-	"github.com/weoses/memelo/ffmpeg-service/entity"
-	"github.com/weoses/memelo/ffmpeg-service/ffmpeg"
 )
 
 type FfmpegJobService interface {

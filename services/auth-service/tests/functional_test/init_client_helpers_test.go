@@ -6,8 +6,8 @@ import (
 	"net"
 	"net/http"
 
-	v1 "github.com/weoses/memelo/gen/proto/v1"
-	"github.com/weoses/memelo/gen/proto/v1/v1connect"
+	v1 "github.com/fikohc/memelo/gen/proto/v1"
+	"github.com/fikohc/memelo/gen/proto/v1/v1connect"
 	"golang.org/x/net/http2"
 )
 

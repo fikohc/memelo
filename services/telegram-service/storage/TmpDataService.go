@@ -1,9 +1,9 @@
 package storage
 
 import (
-	commonservice "github.com/weoses/memelo/common/service"
-	commonstorage "github.com/weoses/memelo/common/storage"
-	"github.com/weoses/memelo/telegram-service/conf"
+	commonservice "github.com/fikohc/memelo/common/service"
+	commonstorage "github.com/fikohc/memelo/common/storage"
+	"github.com/fikohc/memelo/telegram-service/conf"
 )
 
 type TmpDataServiceS3OperationsAdapter commonstorage.S3OperationsAdapter

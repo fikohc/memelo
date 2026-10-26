@@ -6,9 +6,9 @@ import (
 	"net"
 	"time"
 
-	"github.com/weoses/memelo/storage-service/app"
-	"github.com/weoses/memelo/storage-service/conf"
-	"github.com/weoses/memelo/storage-service/ocr"
+	"github.com/fikohc/memelo/storage-service/app"
+	"github.com/fikohc/memelo/storage-service/conf"
+	"github.com/fikohc/memelo/storage-service/ocr"
 	"go.uber.org/fx"
 )
 

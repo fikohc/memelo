@@ -6,7 +6,7 @@ import (
 	"log/slog"
 	"slices"
 
-	"github.com/weoses/memelo/common/helper"
+	"github.com/fikohc/memelo/common/helper"
 )
 
 type MetadataExtractService interface {

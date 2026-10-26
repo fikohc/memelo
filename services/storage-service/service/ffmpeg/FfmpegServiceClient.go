@@ -7,12 +7,12 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/weoses/memelo/common/helper"
-	commonservice "github.com/weoses/memelo/common/service"
-	"github.com/weoses/memelo/common/temp"
-	v1 "github.com/weoses/memelo/gen/proto/v1"
-	"github.com/weoses/memelo/gen/proto/v1/v1connect"
-	"github.com/weoses/memelo/storage-service/conf"
+	"github.com/fikohc/memelo/common/helper"
+	commonservice "github.com/fikohc/memelo/common/service"
+	"github.com/fikohc/memelo/common/temp"
+	v1 "github.com/fikohc/memelo/gen/proto/v1"
+	"github.com/fikohc/memelo/gen/proto/v1/v1connect"
+	"github.com/fikohc/memelo/storage-service/conf"
 )
 
 func newClient(cfg *conf.FfmpegServiceConfig) v1connect.FfmpegServiceClient {

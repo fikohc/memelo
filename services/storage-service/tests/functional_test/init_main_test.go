@@ -8,13 +8,13 @@ import (
 	"testing"
 
 	elasticsearch8 "github.com/elastic/go-elasticsearch/v8"
+	commonconfig "github.com/fikohc/memelo/common/config"
+	"github.com/fikohc/memelo/storage-service/conf"
 	"github.com/minio/minio-go/v7"
 	"github.com/minio/minio-go/v7/pkg/credentials"
 	"github.com/testcontainers/testcontainers-go"
 	tcElastic "github.com/testcontainers/testcontainers-go/modules/elasticsearch"
 	tcMinio "github.com/testcontainers/testcontainers-go/modules/minio"
-	commonconfig "github.com/weoses/memelo/common/config"
-	"github.com/weoses/memelo/storage-service/conf"
 )
 
 const (

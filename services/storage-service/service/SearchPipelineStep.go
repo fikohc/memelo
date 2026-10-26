@@ -4,8 +4,8 @@ import (
 	"context"
 	"log/slog"
 
+	"github.com/fikohc/memelo/storage-service/entity"
 	"github.com/google/uuid"
-	"github.com/weoses/memelo/storage-service/entity"
 )
 
 // PipelineAfterID is the pagination cursor returned by the search pipeline.

@@ -585,7 +585,7 @@ const file_proto_v1_ffmpeg_service_proto_rawDesc = "" +
 	"\rFfmpegService\x12^\n" +
 	"\tSubmitJob\x12'.proto.memelo.v1.SubmitFfmpegJobRequest\x1a(.proto.memelo.v1.SubmitFfmpegJobResponse\x12g\n" +
 	"\fGetJobStatus\x12*.proto.memelo.v1.GetFfmpegJobStatusRequest\x1a+.proto.memelo.v1.GetFfmpegJobStatusResponseB\xae\x01\n" +
-	"\x13com.proto.memelo.v1B\x12FfmpegServiceProtoP\x01Z%github.com/weoses/memelo/gen/proto/v1\xa2\x02\x03PMX\xaa\x02\x0fProto.Memelo.V1\xca\x02\x0fProto\\Memelo\\V1\xe2\x02\x1bProto\\Memelo\\V1\\GPBMetadata\xea\x02\x11Proto::Memelo::V1b\x06proto3"
+	"\x13com.proto.memelo.v1B\x12FfmpegServiceProtoP\x01Z%github.com/fikohc/memelo/gen/proto/v1\xa2\x02\x03PMX\xaa\x02\x0fProto.Memelo.V1\xca\x02\x0fProto\\Memelo\\V1\xe2\x02\x1bProto\\Memelo\\V1\\GPBMetadata\xea\x02\x11Proto::Memelo::V1b\x06proto3"
 
 var (
 	file_proto_v1_ffmpeg_service_proto_rawDescOnce sync.Once

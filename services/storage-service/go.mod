@@ -1,4 +1,4 @@
-module github.com/weoses/memelo/storage-service
+module github.com/fikohc/memelo/storage-service
 
 go 1.25.0
 
@@ -14,8 +14,8 @@ require (
 	github.com/testcontainers/testcontainers-go v0.42.0
 	github.com/testcontainers/testcontainers-go/modules/elasticsearch v0.42.0
 	github.com/testcontainers/testcontainers-go/modules/minio v0.42.0
-	github.com/weoses/memelo/common v0.0.0-00010101000000-000000000000
-	github.com/weoses/memelo/gen v0.0.0-00010101000000-000000000000
+	github.com/fikohc/memelo/common v0.0.0-00010101000000-000000000000
+	github.com/fikohc/memelo/gen v0.0.0-00010101000000-000000000000
 	go.uber.org/fx v1.23.0
 	golang.org/x/time v0.14.0
 	google.golang.org/genai v1.54.0
@@ -121,6 +121,6 @@ require (
 )
 
 replace (
-	github.com/weoses/memelo/common => ../common
-	github.com/weoses/memelo/gen => ../gen
+	github.com/fikohc/memelo/common => ../common
+	github.com/fikohc/memelo/gen => ../gen
 )

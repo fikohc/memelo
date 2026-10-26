@@ -4,10 +4,10 @@ import (
 	"context"
 	"fmt"
 
-	commonservice "github.com/weoses/memelo/common/service"
-	"github.com/weoses/memelo/common/temp"
-	"github.com/weoses/memelo/storage-service/entity"
-	"github.com/weoses/memelo/storage-service/ocr"
+	commonservice "github.com/fikohc/memelo/common/service"
+	"github.com/fikohc/memelo/common/temp"
+	"github.com/fikohc/memelo/storage-service/entity"
+	"github.com/fikohc/memelo/storage-service/ocr"
 )
 
 // MediaEncoder encodes media for a specific type (image or video).

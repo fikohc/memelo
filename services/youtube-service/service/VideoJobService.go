@@ -8,12 +8,12 @@ import (
 	"sync"
 	"time"
 
+	"github.com/fikohc/memelo/common/helper"
+	commonservice "github.com/fikohc/memelo/common/service"
+	"github.com/fikohc/memelo/common/temp"
+	"github.com/fikohc/memelo/youtube-service/conf"
+	"github.com/fikohc/memelo/youtube-service/entity"
 	"github.com/google/uuid"
-	"github.com/weoses/memelo/common/helper"
-	commonservice "github.com/weoses/memelo/common/service"
-	"github.com/weoses/memelo/common/temp"
-	"github.com/weoses/memelo/youtube-service/conf"
-	"github.com/weoses/memelo/youtube-service/entity"
 )
 
 type VideoJobService interface {

@@ -8,8 +8,8 @@ import (
 	"io"
 	"strconv"
 
+	"github.com/fikohc/memelo/telegram-service/entity"
 	"github.com/google/uuid"
-	"github.com/weoses/memelo/telegram-service/entity"
 )
 
 const (

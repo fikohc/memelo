@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	v1 "github.com/weoses/memelo/gen/proto/v1"
+	v1 "github.com/fikohc/memelo/gen/proto/v1"
 )
 
 func waitForRecompute(t *testing.T, ctx context.Context, c *TestClient, jobID string, timeout time.Duration) *v1.RecomputeJobStatus {

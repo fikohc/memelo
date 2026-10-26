@@ -4,10 +4,10 @@ import (
 	"context"
 	"log/slog"
 
-	v1 "github.com/weoses/memelo/gen/proto/v1"
-	"github.com/weoses/memelo/gen/proto/v1/v1connect"
+	v1 "github.com/fikohc/memelo/gen/proto/v1"
+	"github.com/fikohc/memelo/gen/proto/v1/v1connect"
 
-	"github.com/weoses/memelo/auth-service/service"
+	"github.com/fikohc/memelo/auth-service/service"
 )
 
 type IntegrationWebappBasicGrpcApiImpl struct {

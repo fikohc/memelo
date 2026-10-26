@@ -6,11 +6,11 @@ import (
 	"log/slog"
 
 	"connectrpc.com/connect"
+	"github.com/fikohc/memelo/common/helper"
+	v1 "github.com/fikohc/memelo/gen/proto/v1"
+	"github.com/fikohc/memelo/gen/proto/v1/v1connect"
+	service2 "github.com/fikohc/memelo/storage-service/service"
 	"github.com/google/uuid"
-	"github.com/weoses/memelo/common/helper"
-	v1 "github.com/weoses/memelo/gen/proto/v1"
-	"github.com/weoses/memelo/gen/proto/v1/v1connect"
-	service2 "github.com/weoses/memelo/storage-service/service"
 )
 
 type ExportServiceApi struct {

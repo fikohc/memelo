@@ -8,9 +8,9 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/weoses/memelo/common/helper"
-	"github.com/weoses/memelo/common/temp"
-	"github.com/weoses/memelo/ffmpeg-service/conf"
+	"github.com/fikohc/memelo/common/helper"
+	"github.com/fikohc/memelo/common/temp"
+	"github.com/fikohc/memelo/ffmpeg-service/conf"
 )
 
 func ConvertToMp4(ctx context.Context, cfg *conf.FfmpegConfig, video temp.Data, slogger *slog.Logger) (temp.Data, error) {

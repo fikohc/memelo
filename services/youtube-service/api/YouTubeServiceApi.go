@@ -6,9 +6,9 @@ import (
 	"log/slog"
 
 	"connectrpc.com/connect"
-	v1 "github.com/weoses/memelo/gen/proto/v1"
-	"github.com/weoses/memelo/youtube-service/entity"
-	"github.com/weoses/memelo/youtube-service/service"
+	v1 "github.com/fikohc/memelo/gen/proto/v1"
+	"github.com/fikohc/memelo/youtube-service/entity"
+	"github.com/fikohc/memelo/youtube-service/service"
 )
 
 type YouTubeServiceApi struct {

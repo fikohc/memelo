@@ -7,12 +7,12 @@ import (
 	"log/slog"
 	"time"
 
+	"github.com/fikohc/memelo/common/helper"
+	"github.com/fikohc/memelo/common/temp"
 	"github.com/google/uuid"
-	"github.com/weoses/memelo/common/helper"
-	"github.com/weoses/memelo/common/temp"
 
-	"github.com/weoses/memelo/storage-service/entity"
-	storage2 "github.com/weoses/memelo/storage-service/storage"
+	"github.com/fikohc/memelo/storage-service/entity"
+	storage2 "github.com/fikohc/memelo/storage-service/storage"
 )
 
 var ErrMemeNotFound = errors.New("meme not found")

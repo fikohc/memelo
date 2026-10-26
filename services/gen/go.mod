@@ -1,4 +1,4 @@
-module github.com/weoses/memelo/gen
+module github.com/fikohc/memelo/gen
 
 go 1.25.0
 

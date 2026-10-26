@@ -65,7 +65,7 @@ services:
   storage-service:
     build:
       dockerfile: Dockerfile-storage-service
-    image: ghcr.io/weoses/storage-service:${RELEASE_VERSION:-latest}
+    image: ghcr.io/fikohc/storage-service:${RELEASE_VERSION:-latest}
     environment:
       METADATA_DB_ELASTIC_ADDRESSES: ${ELASTIC_ADDRESSES:-http://elasticsearch:9200}
       METADATA_DB_ELASTIC_USERNAME: ${ELASTIC_USERNAME:-}
@@ -122,7 +122,7 @@ services:
   telegram-service:
     build:
       dockerfile: Dockerfile-telegram-service
-    image: ghcr.io/weoses/telegram-service:${RELEASE_VERSION:-latest}
+    image: ghcr.io/fikohc/telegram-service:${RELEASE_VERSION:-latest}
     environment:
       TELEGRAM_TOKEN: ${TELEGRAM_TOKEN}
       WEBHOOK_EXTERNALURL: ${TELEGRAM_WEBHOOK_EXTERNALURL}
@@ -157,7 +157,7 @@ services:
   auth-service:
     build:
       dockerfile: Dockerfile-auth-service
-    image: ghcr.io/weoses/auth-service:${RELEASE_VERSION:-latest}
+    image: ghcr.io/fikohc/auth-service:${RELEASE_VERSION:-latest}
     environment:
       POSTGRES_DSN: postgres://${POSTGRES_USER:-memelo}:${POSTGRES_PASSWORD:-memelo}@postgres:5432/auth?sslmode=disable
     restart: unless-stopped
@@ -180,7 +180,7 @@ services:
   youtube-service:
     build:
       dockerfile: Dockerfile-youtube-service
-    image: ghcr.io/weoses/youtube-service:${RELEASE_VERSION:-latest}
+    image: ghcr.io/fikohc/youtube-service:${RELEASE_VERSION:-latest}
     environment:
       SERVER_LISTENADDRESS: ":7004"
       STORAGE_SERVICE_URI: http://storage-service:7001
@@ -213,7 +213,7 @@ services:
   ffmpeg-service:
     build:
       dockerfile: Dockerfile-ffmpeg-service
-    image: ghcr.io/weoses/ffmpeg-service:${RELEASE_VERSION:-latest}
+    image: ghcr.io/fikohc/ffmpeg-service:${RELEASE_VERSION:-latest}
     environment:
       SERVER_LISTENADDRESS: ":7005"
       TEMP_STORAGE_ENDPOINT: ${MINIO_ENDPOINT:-minio:9000}
@@ -244,7 +244,7 @@ services:
   webapp-service:
     build:
       dockerfile: Dockerfile-webapp-service
-    image: ghcr.io/weoses/webapp-service:${RELEASE_VERSION:-latest}
+    image: ghcr.io/fikohc/webapp-service:${RELEASE_VERSION:-latest}
     environment:
       SERVER_LISTENADDRESS: ":7003"
       STORAGE_SERVICE_URI: http://storage-service:7001

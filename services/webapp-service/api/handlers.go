@@ -8,9 +8,9 @@ import (
 	"strings"
 
 	"connectrpc.com/connect"
+	"github.com/fikohc/memelo/webapp/conf"
+	"github.com/fikohc/memelo/webapp/service"
 	"github.com/labstack/echo/v4"
-	"github.com/weoses/memelo/webapp/conf"
-	"github.com/weoses/memelo/webapp/service"
 )
 
 var typeTagRe = regexp.MustCompile(`(?i)\s*-type:(image|video)\s*`)
