@@ -6,6 +6,10 @@ elastic:
   metadataIndex: melo-prod-media-metadata
   tagIndex: melo-prod-tag-metadata
 
+postgres:
+  authDb: "melo-prod-auth"
+  telegramDb: "melo-prod-telegram"
+
 ingress:
   webappDomain: "webapp.prod.cluster.memelo.cloud"   # e.g. app.example.com
   webhookDomain: "tg-webhook.prod.cluster.memelo.cloud"  # e.g. hooks.example.com

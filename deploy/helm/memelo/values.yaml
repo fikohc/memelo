@@ -68,8 +68,8 @@ elastic:
   tagIndex: ""
 
 postgres:
-  authDb: auth
-  telegramDb: telegram
+  authDb: ""
+  telegramDb: ""
 
 ffmpeg:
   cpuLimit: 80

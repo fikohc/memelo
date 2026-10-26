@@ -6,6 +6,11 @@ elastic:
   metadataIndex: melo-test-media-metadata
   tagIndex: melo-test-tag-metadata
 
+
+postgres:
+  authDb: "melo-test-auth"
+  telegramDb: "melo-test-telegram"
+
 ingress:
   webappDomain: "webapp.test.cluster.memelo.cloud"   # e.g. test.example.com
   webhookDomain: "tg-webhook.test.cluster.memelo.cloud"  # e.g. hooks-test.example.com

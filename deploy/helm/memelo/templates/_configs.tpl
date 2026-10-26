@@ -14,7 +14,7 @@ server:
   ListenAddress: :{{ (index .Values.services "auth-service").port }}
 
 postgres:
-  Dsn: "postgres://{{ .Values.secrets.postgresUser }}:{{ .Values.secrets.postgresPassword }}@{{ .Values.secrets.postgresHost }}:5432/{{ .Values.postgres.authDb }}?sslmode=disable"
+  Dsn: "postgres://{{ .Values.secrets.postgresUser }}:{{ .Values.secrets.postgresPassword }}@{{ .Values.secrets.postgresHost }}:{{ .Values.secrets.postgresPort }}/{{ .Values.postgres.authDb }}?sslmode=disable"
 {{- end }}
 
 {{- define "memelo.config.ffmpeg-service" -}}
@@ -173,7 +173,7 @@ auth-service:
   Uri: "http://auth-service:{{ (index .Values.services "auth-service").port }}"
 
 postgres:
-  Dsn: "postgres://{{ .Values.secrets.postgresUser }}:{{ .Values.secrets.postgresPassword }}@{{ .Values.secrets.postgresHost }}:5432/{{ .Values.postgres.telegramDb }}?sslmode=disable"
+  Dsn: "postgres://{{ .Values.secrets.postgresUser }}:{{ .Values.secrets.postgresPassword }}@{{ .Values.secrets.postgresHost }}:{{ .Values.secrets.postgresPort }}/{{ .Values.postgres.telegramDb }}?sslmode=disable"
 
 user-account:
   StaticUuid: "00000000-0000-0000-0000-000000000000"
