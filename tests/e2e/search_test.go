@@ -102,9 +102,9 @@ func TestSearchMeme_Simple(t *testing.T) {
 	}
 
 	respSearch, err := searchClient.SearchMeme(context.Background(), &v1.SearchMemeRequest{
-		AccountId: testAccountId,
-		Query:     "guys",
-		PageSize:  10,
+		AccountIds: []string{testAccountId},
+		Query:      "guys",
+		PageSize:   10,
 	})
 	if err != nil {
 		t.Fatalf("SearchMeme failed: %v", err)
@@ -141,9 +141,9 @@ func TestSearchMeme_All(t *testing.T) {
 	}
 
 	respSearch, err := searchClient.SearchMeme(context.Background(), &v1.SearchMemeRequest{
-		AccountId: testAccountId,
-		Query:     "",
-		PageSize:  10,
+		AccountIds: []string{testAccountId},
+		Query:      "",
+		PageSize:   10,
 	})
 	if err != nil {
 		t.Fatalf("SearchMeme failed: %v", err)
@@ -181,9 +181,9 @@ func TestSearchMeme_ById(t *testing.T) {
 	}
 
 	respSearch, err := searchClient.SearchMeme(context.Background(), &v1.SearchMemeRequest{
-		AccountId: testAccountId,
-		Query:     id,
-		PageSize:  10,
+		AccountIds: []string{testAccountId},
+		Query:      id,
+		PageSize:   10,
 	})
 	if err != nil {
 		t.Fatalf("SearchMeme by ID failed: %v", err)
@@ -218,9 +218,9 @@ func TestSearchMeme_ById_ValidImageLinks(t *testing.T) {
 	}
 
 	respSearch, err := searchClient.SearchMeme(context.Background(), &v1.SearchMemeRequest{
-		AccountId: testAccountId,
-		Query:     id,
-		PageSize:  10,
+		AccountIds: []string{testAccountId},
+		Query:      id,
+		PageSize:   10,
 	})
 	if err != nil {
 		t.Fatalf("SearchMeme by ID failed: %v", err)
@@ -290,9 +290,9 @@ func TestSearchMeme_EmbeddingSearch(t *testing.T) {
 	}
 
 	respSearch, err := searchClient.SearchMeme(context.Background(), &v1.SearchMemeRequest{
-		AccountId: testAccountId,
-		Query:     "cat",
-		PageSize:  10,
+		AccountIds: []string{testAccountId},
+		Query:      "cat",
+		PageSize:   10,
 	})
 	if err != nil {
 		t.Fatalf("SearchMeme by embedding failed: %v", err)
@@ -341,9 +341,9 @@ func createVideoTestInternal(t *testing.T, file string) {
 
 	id := resp.GetResult().GetId()
 	respSearch, err := searchClient.SearchMeme(context.Background(), &v1.SearchMemeRequest{
-		AccountId: testAccountId,
-		Query:     id,
-		PageSize:  10,
+		AccountIds: []string{testAccountId},
+		Query:      id,
+		PageSize:   10,
 	})
 	if err != nil {
 		t.Fatalf("SearchMeme by ID failed: %v", err)
@@ -393,9 +393,9 @@ func createVideoTestInternal(t *testing.T, file string) {
 
 func TestSearchMeme_Empty(t *testing.T) {
 	resp, err := searchClient.SearchMeme(context.Background(), &v1.SearchMemeRequest{
-		AccountId: testAccountId,
-		Query:     "test",
-		PageSize:  10,
+		AccountIds: []string{testAccountId},
+		Query:      "test",
+		PageSize:   10,
 	})
 	if err != nil {
 		t.Fatalf("SearchMeme failed: %v", err)

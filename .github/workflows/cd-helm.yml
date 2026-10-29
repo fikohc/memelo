@@ -69,12 +69,22 @@ jobs:
             --set image.tag=${{ github.event.inputs.TAG }} \
             --wait --timeout 5m
 
+      - name: Port-forward storage-service
+        if: ${{ matrix.target_env == 'production' }}
+        run: |
+          kubectl port-forward -n memelo-${{ matrix.target_env }} svc/storage-service 7001:7001 \
+            > "$RUNNER_TEMP/port-forward.log" 2>&1 &
+          for i in $(seq 1 30); do
+            curl -sf http://localhost:7001/health && exit 0
+            sleep 1
+          done
+          cat "$RUNNER_TEMP/port-forward.log"
+          exit 1
+
       - name: Tests
         uses: robherley/go-test-action@v0
         with:
           moduleDirectory: tests/e2e
         env:
-          STORAGE_SERVICE_URI: ${{ secrets.TEST_STORAGE_SERVICE_URI }}
-          STORAGE_SERVICE_USERNAME: ${{ secrets.TEST_PROXY_USERNAME }}
-          STORAGE_SERVICE_PASSWORD: ${{ secrets.TEST_PROXY_PASSWORD }}
+          STORAGE_SERVICE_URI: http://localhost:7001
         if: ${{ matrix.target_env == 'production' }}
