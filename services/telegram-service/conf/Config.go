@@ -10,10 +10,26 @@ import (
 type TelegramConfig struct {
 	Token string
 	Debug bool
+	// ServiceChatId is the private channel (-100…) videos are uploaded to
+	// so inline results can reference them by Telegram file_id.
+	ServiceChatId int64
+}
+
+type MtprotoConfig struct {
+	ApiId   int
+	ApiHash string
+}
+
+type PostgresConfig struct {
+	Dsn string
 }
 
 type InlineConfig struct {
 	PageSize int
+	// LargeMediaThresholdMb is the size above which uncached media is not
+	// sent by URL but uploaded with priority (Telegram fetches URLs only up
+	// to 20 MB). Defaults to 20 when unset.
+	LargeMediaThresholdMb int64
 }
 
 type StorageServiceConfig struct {
@@ -41,6 +57,8 @@ type Config struct {
 	Log            *commonconfig.LoggingConfig      `mapstructure:"log"`
 	Webhook        *WebhookConfig                   `mapstructure:"webhook"`
 	Telegram       *TelegramConfig                  `mapstructure:"telegram"`
+	Mtproto        *MtprotoConfig                   `mapstructure:"mtproto"`
+	Postgres       *PostgresConfig                  `mapstructure:"postgres"`
 	Inline         *InlineConfig                    `mapstructure:"inline"`
 	StorageService *StorageServiceConfig            `mapstructure:"storage-service"`
 	YoutubeService *YoutubeServiceConfig            `mapstructure:"youtube-service"`

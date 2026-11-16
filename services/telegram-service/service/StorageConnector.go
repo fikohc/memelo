@@ -135,6 +135,7 @@ func (s *StorageConnectorImpl) CreateMeme(ctx context.Context, data temp.S3Backe
 		Text:            response.Result.GetOcrResult(),
 		DuplicateStatus: response.Status.String(),
 		Caption:         response.Result.GetCaption(),
+		MediaUrl:        response.Result.GetMediaOriginal().GetUrl(),
 	}, nil
 }
 

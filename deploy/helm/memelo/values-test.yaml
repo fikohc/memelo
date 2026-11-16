@@ -14,3 +14,7 @@ postgres:
 ingress:
   webappDomain: "webapp.test.cluster.memelo.cloud"   # e.g. test.example.com
   webhookDomain: "tg-webhook.test.cluster.memelo.cloud"  # e.g. hooks-test.example.com
+
+telegram:
+  # Telegram fetches photos by URL only up to 5 MB, so upload anything bigger.
+  largeMediaThresholdMb: 5

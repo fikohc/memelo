@@ -11,7 +11,6 @@ import (
 	"github.com/fikohc/memelo/telegram-service/conf"
 	"github.com/fikohc/memelo/telegram-service/service"
 	tgstorage "github.com/fikohc/memelo/telegram-service/storage"
-	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	"go.uber.org/fx"
 	"go.uber.org/fx/fxevent"
 )
@@ -63,15 +62,26 @@ func main() {
 		fx.Provide(service.NewTelegramBot),
 		fx.Provide(tgstorage.NewTmpDataServiceS3Adapter),
 		fx.Provide(tgstorage.NewTmpDataService),
+		fx.Provide(tgstorage.NewGormDb),
+		fx.Provide(tgstorage.NewMtprotoSessionStorage),
+		fx.Provide(tgstorage.NewMediaFileCacheStorage),
+		fx.Provide(service.NewMtprotoClient),
+		fx.Provide(service.NewTelegramFileDownloader),
+		fx.Provide(service.NewServiceChatMediaUploader),
+		fx.Provide(service.NewBackgroundServiceChatUploader),
+		fx.Provide(service.NewMediaSizeProber),
+		fx.Provide(service.NewInlineResultBuilder),
 		fx.Provide(service.NewStorageConnector),
 		fx.Provide(service.NewYouTubeConnector),
 		fx.Provide(service.NewAuthConnector),
-		fx.Provide(fx.Annotate(service.NewTelegramFileResolverService, fx.From(new(*tgbotapi.BotAPI)))),
 		fx.Provide(service.NewPermissionService),
 		fx.Provide(service.NewMessageHandlerService),
 		fx.Provide(service.NewQueryProcessorFactory),
 		fx.Provide(service.NewInlineService),
 		fx.Provide(service.NewTelegramBotService),
+		fx.Invoke(func(cfg *conf.Config) error {
+			return tgstorage.RunMigrations(cfg, slog.With("service", "Migrator"))
+		}),
 		fx.Invoke(Startup),
 	).Run()
 }
