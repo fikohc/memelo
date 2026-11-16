@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io"
 	"log/slog"
 	"net/http"
 	"sync"
@@ -25,6 +26,9 @@ import (
 
 const (
 	serviceChatMaxAttempts = 3
+	// thumbnailDownloadLimit guards against a wrong thumbnail URL pulling a
+	// large file into memory; meme thumbnails are a few dozen kB.
+	thumbnailDownloadLimit = 5 << 20
 	// Bot API channel ids are -100<channel id>.
 	botApiChannelIdOffset = -1000000000000
 )
@@ -99,12 +103,17 @@ func (u *ServiceChatMediaUploaderImpl) upload(ctx context.Context, item entity.M
 		return "", errors.New("download media: unknown content length")
 	}
 
-	media, filename, err := u.mediaOption(item)
+	api := u.mtproto.API()
+	var thumb tg.InputFileClass
+	if item.Type == entity.ResultTypeVideo {
+		thumb = u.uploadThumbnail(ctx, api, item)
+	}
+
+	media, filename, err := mediaOption(item, thumb)
 	if err != nil {
 		return "", err
 	}
 
-	api := u.mtproto.API()
 	file, err := uploader.NewUploader(api).Upload(ctx, uploader.NewUpload(filename, resp.Body, resp.ContentLength))
 	if err != nil {
 		return "", fmt.Errorf("mtproto upload: %w", err)
@@ -134,18 +143,67 @@ func (u *ServiceChatMediaUploaderImpl) upload(ctx context.Context, item entity.M
 		"memeId", item.Id,
 		"type", item.Type,
 		"messageId", posted.ID,
-		"size", resp.ContentLength)
+		"size", resp.ContentLength,
+		"withThumbnail", thumb != nil)
 	return fileId, nil
 }
 
+// uploadThumbnail downloads the meme thumbnail, converts it to fit the
+// Telegram thumbnail limits and uploads it. A missing thumbnail must not fail
+// the media upload, so errors are logged and nil is returned.
+func (u *ServiceChatMediaUploaderImpl) uploadThumbnail(ctx context.Context, api *tg.Client, item entity.MemeSearchResult) tg.InputFileClass {
+	if item.ThumbUrl == "" {
+		return nil
+	}
+	data, err := u.downloadThumbnail(ctx, item.ThumbUrl)
+	if err == nil {
+		data, err = prepareTelegramThumbnail(data)
+	}
+	if err != nil {
+		u.log.WarnContext(ctx, "Thumbnail not attached to service chat upload", "memeId", item.Id, "error", err)
+		return nil
+	}
+
+	file, err := uploader.NewUploader(api).FromBytes(ctx, "thumb.jpg", data)
+	if err != nil {
+		u.log.WarnContext(ctx, "Thumbnail upload failed", "memeId", item.Id, "error", err)
+		return nil
+	}
+	return file
+}
+
+func (u *ServiceChatMediaUploaderImpl) downloadThumbnail(ctx context.Context, url string) ([]byte, error) {
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
+	if err != nil {
+		return nil, fmt.Errorf("create thumbnail request: %w", err)
+	}
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("download thumbnail: %w", err)
+	}
+	defer helper.QuietClose(resp.Body, u.log)
+	if resp.StatusCode >= 400 {
+		return nil, fmt.Errorf("download thumbnail: non-2xx status: %d", resp.StatusCode)
+	}
+	data, err := io.ReadAll(io.LimitReader(resp.Body, thumbnailDownloadLimit+1))
+	if err != nil {
+		return nil, fmt.Errorf("read thumbnail: %w", err)
+	}
+	if len(data) > thumbnailDownloadLimit {
+		return nil, fmt.Errorf("thumbnail is larger than %d bytes", thumbnailDownloadLimit)
+	}
+	return data, nil
+}
+
 // mediaOption returns how an uploaded file is posted: videos as streamable
-// video documents, images as photos.
-func (u *ServiceChatMediaUploaderImpl) mediaOption(item entity.MemeSearchResult) (func(tg.InputFileClass) message.MediaOption, string, error) {
+// video documents with the given thumbnail (if not nil), images as photos.
+// Photos take no thumbnail: Telegram generates their preview sizes itself.
+func mediaOption(item entity.MemeSearchResult, thumb tg.InputFileClass) (func(tg.InputFileClass) message.MediaOption, string, error) {
 	caption := styling.Plain(item.Id)
 	switch item.Type {
 	case entity.ResultTypeVideo:
 		return func(file tg.InputFileClass) message.MediaOption {
-			return message.UploadedDocument(file, caption).
+			doc := message.UploadedDocument(file, caption).
 				MIME("video/mp4").
 				Filename("video.mp4").
 				Attributes(&tg.DocumentAttributeVideo{
@@ -153,6 +211,10 @@ func (u *ServiceChatMediaUploaderImpl) mediaOption(item entity.MemeSearchResult)
 					W:                 item.MediaWidth,
 					H:                 item.MediaHeight,
 				})
+			if thumb != nil {
+				doc = doc.Thumb(thumb)
+			}
+			return doc
 		}, "video.mp4", nil
 	case entity.ResultTypeImage:
 		return func(file tg.InputFileClass) message.MediaOption {

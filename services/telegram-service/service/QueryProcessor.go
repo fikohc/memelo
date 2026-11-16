@@ -343,6 +343,7 @@ func (p *prefixSearchProcessor) Process(ctx context.Context, accountId uuid.UUID
 // and performs the actual delete when a result is chosen.
 type DeleteQueryProcessor struct {
 	prefixSearchProcessor
+
 	mediaCache tgstorage.MediaFileCacheStorage
 }
 
