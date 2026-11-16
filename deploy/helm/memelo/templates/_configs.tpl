@@ -162,6 +162,11 @@ server:
 telegram:
   Token: {{ .Values.secrets.telegramToken }}
   Debug: false
+  ServiceChatId: {{ .Values.secrets.telegramServiceChatId | default 0 | int64 }}
+
+mtproto:
+  ApiId: {{ .Values.secrets.telegramApiId | default 0 | int64 }}
+  ApiHash: {{ .Values.secrets.telegramApiHash | quote }}
 
 inline:
   PageSize: 20

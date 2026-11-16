@@ -7,6 +7,14 @@ server:
 telegram:
   Token:
   Debug: false
+  ServiceChatId: 0
+
+mtproto:
+  ApiId: 0
+  ApiHash:
+
+postgres:
+  Dsn: "postgres://postgres:postgres@localhost:5432/melo-telegram?sslmode=disable"
 
 inline:
   PageSize: 20

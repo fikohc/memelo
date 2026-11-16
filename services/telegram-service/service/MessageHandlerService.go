@@ -4,8 +4,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io"
 	"log/slog"
-	"net/http"
 	"strings"
 	"time"
 
@@ -14,6 +14,7 @@ import (
 	"github.com/fikohc/memelo/common/temp"
 	"github.com/fikohc/memelo/telegram-service/conf"
 	"github.com/fikohc/memelo/telegram-service/entity"
+	tgstorage "github.com/fikohc/memelo/telegram-service/storage"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	"github.com/google/uuid"
 )
@@ -28,6 +29,9 @@ type MessageHandlerService interface {
 const (
 	parseMode    = "Markdown"
 	msgForbidden = "You are not allowed to perform this action."
+
+	// duplicateStatus is the CreateMemeStatus name of an already stored meme.
+	duplicateStatus = "STATUS_DUPLICATE"
 )
 
 type MessageHandlerResponse struct {
@@ -37,7 +41,8 @@ type MessageHandlerResponse struct {
 
 type MessageHandlerServiceImpl struct {
 	storage           StorageConnector
-	fileResolver      TelegramFileResolverService
+	fileDownloader    TelegramFileDownloader
+	mediaCache        tgstorage.MediaFileCacheStorage
 	permissionService PermissionService
 	tmpDataService    commonservice.TmpDataService
 	youtubeConnector  YouTubeConnector
@@ -50,18 +55,16 @@ func (m MessageHandlerServiceImpl) ProcessImageMessage(ctx context.Context, mess
 		return nil, errors.New("messageHandlerService: message has no sender")
 	}
 	return InvokeWithPermission(ctx, m.permissionService, message.From.ID, PermissionCreate, func() (*MessageHandlerResponse, error) {
-		var fileId string
-		if len(message.Photo) >= 1 {
-			fileId = message.Photo[len(message.Photo)-1].FileID
-		}
-		if fileId == "" {
+		if len(message.Photo) == 0 || message.Photo[len(message.Photo)-1].FileID == "" {
 			return nil, errors.New("messageHandlerService: message dont contain image")
 		}
+		photo := message.Photo[len(message.Photo)-1]
 
-		result, err := m.createMediaMeme(ctx, "image", fileId, m.staticAccountId)
+		result, err := m.createMediaMeme(ctx, entity.ResultTypeImage, photo.FileID, "image/jpeg", m.staticAccountId)
 		if err != nil {
 			return nil, err
 		}
+		m.cacheFileId(ctx, result, entity.ResultTypeImage, photo.FileID, photo.FileUniqueID, int64(photo.FileSize))
 
 		m.slogger.InfoContext(ctx, "meme created",
 			"imageId", result.Id,
@@ -91,10 +94,11 @@ func (m MessageHandlerServiceImpl) ProcessVideoMessage(ctx context.Context, mess
 			return nil, errors.New("messageHandlerService: message does not contain a video")
 		}
 
-		result, err := m.createMediaMeme(ctx, "video", message.Video.FileID, m.staticAccountId)
+		result, err := m.createMediaMeme(ctx, entity.ResultTypeVideo, message.Video.FileID, message.Video.MimeType, m.staticAccountId)
 		if err != nil {
 			return nil, err
 		}
+		m.cacheFileId(ctx, result, entity.ResultTypeVideo, message.Video.FileID, message.Video.FileUniqueID, int64(message.Video.FileSize))
 
 		m.slogger.InfoContext(ctx, "video meme created",
 			"memeId", result.Id,
@@ -138,7 +142,7 @@ func (m MessageHandlerServiceImpl) ProcessDocumentMessage(ctx context.Context, m
 			return nil, errors.New("messageHandlerService: invalid mime type")
 		}
 
-		result, err := m.createMediaMeme(ctx, typ, message.Document.FileID, m.staticAccountId)
+		result, err := m.createMediaMeme(ctx, typ, message.Document.FileID, mimeType, m.staticAccountId)
 		if err != nil {
 			return nil, err
 		}
@@ -226,15 +230,10 @@ func (m MessageHandlerServiceImpl) ProcessYouTubeMessage(ctx context.Context, me
 	})
 }
 
-func (m MessageHandlerServiceImpl) createMediaMeme(ctx context.Context, reqType string, fileId string, accountId uuid.UUID) (*entity.MemeCreateResult, error) {
-	fileURL, err := m.fileResolver.GetFileURL(ctx, fileId)
+func (m MessageHandlerServiceImpl) createMediaMeme(ctx context.Context, reqType string, fileId string, mimeType string, accountId uuid.UUID) (*entity.MemeCreateResult, error) {
+	s3data, err := m.downloadToS3(ctx, fileId, mimeType)
 	if err != nil {
-		return nil, fmt.Errorf("messageHandlerService: GetFileURL failed, fileId: %s : %w", fileId, err)
-	}
-
-	s3data, err := m.downloadToS3(ctx, fileURL)
-	if err != nil {
-		return nil, fmt.Errorf("messageHandlerService: downloadToS3 failed: %w", err)
+		return nil, fmt.Errorf("messageHandlerService: downloadToS3 failed, fileId: %s : %w", fileId, err)
 	}
 	defer helper.QuietClose(s3data, m.slogger)
 
@@ -246,39 +245,61 @@ func (m MessageHandlerServiceImpl) createMediaMeme(ctx context.Context, reqType 
 	return result, nil
 }
 
-func (m MessageHandlerServiceImpl) downloadToS3(ctx context.Context, fileURL string) (temp.S3BackedData, error) {
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, fileURL, nil)
+// downloadToS3 streams a Telegram file over MTProto straight into temp S3 storage.
+func (m MessageHandlerServiceImpl) downloadToS3(ctx context.Context, fileId string, mimeType string) (temp.S3BackedData, error) {
+	if mimeType == "" {
+		mimeType = "application/octet-stream"
+	}
+
+	pr, pw := io.Pipe()
+	go func() {
+		err := m.fileDownloader.Download(ctx, fileId, pw)
+		if err != nil {
+			m.slogger.ErrorContext(ctx, "downloadToS3: telegram download failed",
+				"fileId", fileId,
+				"error", err)
+		}
+		pw.CloseWithError(err)
+	}()
+
+	s3data, err := m.tmpDataService.ByReader(ctx, mimeType, pr)
+	// Unblocks the downloader if the upload stopped reading early.
+	pr.CloseWithError(err)
 	if err != nil {
-		return nil, fmt.Errorf("downloadToS3: create request: %w", err)
-	}
-
-	resp, err := http.DefaultClient.Do(req)
-	if err != nil {
-		return nil, fmt.Errorf("downloadToS3: http get: %w", err)
-	}
-	defer helper.QuietClose(resp.Body, m.slogger)
-
-	if resp.StatusCode >= 400 {
-		return nil, fmt.Errorf("downloadToS3: non-2xx status: %d", resp.StatusCode)
-	}
-
-	contentType := resp.Header.Get("Content-Type")
-	if contentType == "" {
-		contentType = "application/octet-stream"
-	}
-	contentType = strings.SplitAfter(contentType, ";")[0]
-
-	s3data, err := m.tmpDataService.ByReader(ctx, contentType, resp.Body)
-	if err != nil {
+		m.slogger.ErrorContext(ctx, "downloadToS3: upload to s3 failed",
+			"fileId", fileId,
+			"mimeType", mimeType,
+			"error", err)
 		return nil, fmt.Errorf("downloadToS3: upload to s3: %w", err)
 	}
 
 	return s3data, nil
 }
 
+// cacheFileId stores the file_id of media the user sent, so inline results
+// can send it as cached media without a service chat upload.
+// Duplicates are skipped: the returned id belongs to another stored meme.
+// Documents are not cached: their file_id is not accepted as a cached photo/video.
+func (m MessageHandlerServiceImpl) cacheFileId(ctx context.Context, result *entity.MemeCreateResult, mediaType string, fileId string, fileUniqueId string, size int64) {
+	if result.DuplicateStatus == duplicateStatus {
+		return
+	}
+	err := m.mediaCache.Save(ctx, &entity.MediaFileCache{
+		MemeId:       result.Id,
+		Type:         mediaType,
+		FileId:       fileId,
+		FileUniqueId: fileUniqueId,
+		Size:         size,
+	})
+	if err != nil {
+		m.slogger.ErrorContext(ctx, "Failed to cache media file id", "memeId", result.Id, "error", err)
+	}
+}
+
 func NewMessageHandlerService(
 	storage StorageConnector,
-	fileResolver TelegramFileResolverService,
+	fileDownloader TelegramFileDownloader,
+	mediaCache tgstorage.MediaFileCacheStorage,
 	permissionService PermissionService,
 	tmpDataService commonservice.TmpDataService,
 	youtubeConnector YouTubeConnector,
@@ -287,7 +308,8 @@ func NewMessageHandlerService(
 	staticAccountId := uuid.MustParse(cfg.UserAccount.StaticUuid)
 	return &MessageHandlerServiceImpl{
 		storage:           storage,
-		fileResolver:      fileResolver,
+		fileDownloader:    fileDownloader,
+		mediaCache:        mediaCache,
 		permissionService: permissionService,
 		tmpDataService:    tmpDataService,
 		youtubeConnector:  youtubeConnector,
