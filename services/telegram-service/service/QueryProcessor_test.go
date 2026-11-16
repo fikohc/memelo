@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"testing"
+	"time"
 
 	"github.com/fikohc/memelo/telegram-service/entity"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
@@ -105,11 +106,40 @@ func (f *fakeMediaFileCache) Save(context.Context, *entity.MediaFileCache) error
 func (f *fakeMediaFileCache) Delete(context.Context, uuid.UUID) error { return nil }
 
 type fakeServiceChatUploader struct {
-	enqueued []string
+	enqueued         []string
+	priorityEnqueued []string
+	// priorityFileIds answers priority uploads immediately; ids not in the
+	// map never call back, simulating an upload that doesn't finish in time.
+	priorityFileIds map[string]string
 }
 
-func (f *fakeServiceChatUploader) Enqueue(item entity.MemeSearchResult) {
+func (f *fakeServiceChatUploader) EnqueueMaybe(item entity.MemeSearchResult) {
 	f.enqueued = append(f.enqueued, item.Id)
+}
+
+func (f *fakeServiceChatUploader) EnqueuePriority(item entity.MemeSearchResult, cb UploadCallback) {
+	f.priorityEnqueued = append(f.priorityEnqueued, item.Id)
+	if fileId, ok := f.priorityFileIds[item.Id]; ok {
+		cb(fileId, nil)
+	}
+}
+
+type fakeMediaSizeProber struct {
+	sizes map[string]int64
+}
+
+func (f *fakeMediaSizeProber) Size(_ context.Context, url string) (int64, error) {
+	size, ok := f.sizes[url]
+	if !ok {
+		return 0, errors.New("head failed")
+	}
+	return size, nil
+}
+
+func newTestInlineResultBuilder(cache *fakeMediaFileCache, uploader *fakeServiceChatUploader, prober *fakeMediaSizeProber) *InlineResultBuilderImpl {
+	builder := NewInlineResultBuilder(cache, uploader, prober).(*InlineResultBuilderImpl)
+	builder.largeMediaWait = 50 * time.Millisecond
+	return builder
 }
 
 func TestInlineResultBuilder_UsesCachedMediaAndQueuesMisses(t *testing.T) {
@@ -118,12 +148,16 @@ func TestInlineResultBuilder_UsesCachedMediaAndQueuesMisses(t *testing.T) {
 	missingVideo := uuid.New()
 	missingImage := uuid.New()
 	uploader := &fakeServiceChatUploader{}
-	builder := NewInlineResultBuilder(
+	builder := newTestInlineResultBuilder(
 		&fakeMediaFileCache{entries: map[uuid.UUID]entity.MediaFileCache{
 			cachedVideo: {MemeId: cachedVideo, Type: entity.ResultTypeVideo, FileId: "video-file-id"},
 			cachedImage: {MemeId: cachedImage, Type: entity.ResultTypeImage, FileId: "photo-file-id"},
 		}},
 		uploader,
+		&fakeMediaSizeProber{sizes: map[string]int64{
+			"https://example/missing.mp4": 1 << 20,
+			"https://example/missing.jpg": 1 << 20,
+		}},
 	)
 
 	results, err := builder.Build(context.Background(), []entity.MemeSearchResult{
@@ -160,15 +194,101 @@ func TestInlineResultBuilder_UsesCachedMediaAndQueuesMisses(t *testing.T) {
 	if len(uploader.enqueued) != 2 || uploader.enqueued[0] != want[0] || uploader.enqueued[1] != want[1] {
 		t.Errorf("enqueued = %v, want %v", uploader.enqueued, want)
 	}
+	if len(uploader.priorityEnqueued) != 0 {
+		t.Errorf("priority enqueued = %v, want none", uploader.priorityEnqueued)
+	}
+}
+
+func TestInlineResultBuilder_LargeMediaUploadedInTimeIsCached(t *testing.T) {
+	large := uuid.NewString()
+	uploader := &fakeServiceChatUploader{priorityFileIds: map[string]string{large: "large-file-id"}}
+	builder := newTestInlineResultBuilder(
+		&fakeMediaFileCache{},
+		uploader,
+		&fakeMediaSizeProber{sizes: map[string]int64{"https://example/large.mp4": 21 << 20}},
+	)
+
+	results, err := builder.Build(context.Background(), []entity.MemeSearchResult{
+		{Id: large, Type: entity.ResultTypeVideo, MediaUrl: "https://example/large.mp4"},
+	}, "")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if len(results) != 1 {
+		t.Fatalf("got %d results, want 1", len(results))
+	}
+	video, ok := results[0].(tgbotapi.InlineQueryResultCachedVideo)
+	if !ok || video.VideoID != "large-file-id" {
+		t.Errorf("got %#v, want cached video large-file-id", results[0])
+	}
+	if len(uploader.priorityEnqueued) != 1 || len(uploader.enqueued) != 0 {
+		t.Errorf("priority = %v, ordinary = %v; want only priority", uploader.priorityEnqueued, uploader.enqueued)
+	}
+}
+
+func TestInlineResultBuilder_ExcludesLargeMediaNotUploadedInTime(t *testing.T) {
+	first := uuid.NewString()
+	large := uuid.NewString()
+	last := uuid.NewString()
+	builder := newTestInlineResultBuilder(
+		&fakeMediaFileCache{},
+		&fakeServiceChatUploader{},
+		&fakeMediaSizeProber{sizes: map[string]int64{
+			"https://example/first.jpg": 1 << 20,
+			"https://example/large.mp4": 21 << 20,
+			"https://example/last.mp4":  1 << 20,
+		}},
+	)
+
+	results, err := builder.Build(context.Background(), []entity.MemeSearchResult{
+		{Id: first, Type: entity.ResultTypeImage, MediaUrl: "https://example/first.jpg"},
+		{Id: large, Type: entity.ResultTypeVideo, MediaUrl: "https://example/large.mp4"},
+		{Id: last, Type: entity.ResultTypeVideo, MediaUrl: "https://example/last.mp4"},
+	}, "")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if len(results) != 2 {
+		t.Fatalf("got %d results, want 2", len(results))
+	}
+	if photo, ok := results[0].(tgbotapi.InlineQueryResultPhoto); !ok || photo.ID != first {
+		t.Errorf("results[0] = %#v, want photo %s", results[0], first)
+	}
+	if video, ok := results[1].(tgbotapi.InlineQueryResultVideo); !ok || video.ID != last {
+		t.Errorf("results[1] = %#v, want video %s", results[1], last)
+	}
+}
+
+func TestInlineResultBuilder_ProbeFailureFallsBackToUrl(t *testing.T) {
+	id := uuid.NewString()
+	uploader := &fakeServiceChatUploader{}
+	builder := newTestInlineResultBuilder(&fakeMediaFileCache{}, uploader, &fakeMediaSizeProber{})
+
+	results, err := builder.Build(context.Background(), []entity.MemeSearchResult{
+		{Id: id, Type: entity.ResultTypeVideo, MediaUrl: "https://example/video.mp4"},
+	}, "")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if _, ok := results[0].(tgbotapi.InlineQueryResultVideo); !ok {
+		t.Errorf("got %T, want InlineQueryResultVideo", results[0])
+	}
+	if len(uploader.enqueued) != 1 || len(uploader.priorityEnqueued) != 0 {
+		t.Errorf("ordinary = %v, priority = %v; want only ordinary", uploader.enqueued, uploader.priorityEnqueued)
+	}
 }
 
 func TestInlineResultBuilder_IgnoresCachedEntryOfOtherType(t *testing.T) {
 	id := uuid.New()
-	builder := NewInlineResultBuilder(
+	builder := newTestInlineResultBuilder(
 		&fakeMediaFileCache{entries: map[uuid.UUID]entity.MediaFileCache{
 			id: {MemeId: id, Type: entity.ResultTypeImage, FileId: "photo-file-id"},
 		}},
 		&fakeServiceChatUploader{},
+		&fakeMediaSizeProber{sizes: map[string]int64{"https://example/video.mp4": 1 << 20}},
 	)
 
 	results, err := builder.Build(context.Background(), []entity.MemeSearchResult{
@@ -183,9 +303,10 @@ func TestInlineResultBuilder_IgnoresCachedEntryOfOtherType(t *testing.T) {
 }
 
 func TestInlineResultBuilder_FallsBackToUrlWhenCacheFails(t *testing.T) {
-	builder := NewInlineResultBuilder(
+	builder := newTestInlineResultBuilder(
 		&fakeMediaFileCache{err: errors.New("db down")},
 		&fakeServiceChatUploader{},
+		&fakeMediaSizeProber{sizes: map[string]int64{"https://example/video.mp4": 1 << 20}},
 	)
 
 	results, err := builder.Build(context.Background(), []entity.MemeSearchResult{

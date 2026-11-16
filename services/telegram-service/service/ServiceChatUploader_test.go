@@ -2,7 +2,12 @@ package service
 
 import (
 	"bytes"
+	"context"
+	"errors"
+	"log/slog"
+	"sync"
 	"testing"
+	"time"
 
 	"github.com/fikohc/memelo/telegram-service/entity"
 	"github.com/gotd/td/fileid"
@@ -72,5 +77,124 @@ func TestBotApiFileId_RejectsMismatchedType(t *testing.T) {
 
 	if _, err := botApiFileId(posted, entity.ResultTypeImage); err == nil {
 		t.Error("expected error for a video posted as image")
+	}
+}
+
+type fakeServiceChatMediaUploader struct {
+	upload func(context.Context, entity.MemeSearchResult) (string, error)
+}
+
+func (f *fakeServiceChatMediaUploader) Upload(ctx context.Context, item entity.MemeSearchResult) (string, error) {
+	return f.upload(ctx, item)
+}
+
+func newTestUploader(upload func(context.Context, entity.MemeSearchResult) (string, error)) *BackgroundServiceChatUploaderImpl {
+	return &BackgroundServiceChatUploaderImpl{
+		uploader:      &fakeServiceChatMediaUploader{upload: upload},
+		chatId:        -1001,
+		log:           slog.Default(),
+		queue:         make(chan *uploadJob, serviceChatQueueSize),
+		priorityQueue: make(chan *uploadJob, serviceChatPriorityQueueSize),
+		jobs:          make(map[string]*uploadJob),
+	}
+}
+
+func TestUploaderWorker_TakesPriorityJobsFirst(t *testing.T) {
+	var mu sync.Mutex
+	var order []string
+	u := newTestUploader(func(_ context.Context, item entity.MemeSearchResult) (string, error) {
+		mu.Lock()
+		defer mu.Unlock()
+		order = append(order, item.Id)
+		return "file-" + item.Id, nil
+	})
+
+	u.EnqueueMaybe(entity.MemeSearchResult{Id: "ordinary-1"})
+	u.EnqueueMaybe(entity.MemeSearchResult{Id: "ordinary-2"})
+	done := make(chan struct{}, 2)
+	notify := func(string, error) { done <- struct{}{} }
+	u.EnqueuePriority(entity.MemeSearchResult{Id: "priority-1"}, notify)
+	u.EnqueuePriority(entity.MemeSearchResult{Id: "priority-2"}, notify)
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	go u.worker(ctx)
+	waitUntil(t, func() bool {
+		mu.Lock()
+		defer mu.Unlock()
+		return len(order) == 4
+	})
+
+	want := []string{"priority-1", "priority-2", "ordinary-1", "ordinary-2"}
+	for i := range want {
+		if order[i] != want[i] {
+			t.Fatalf("upload order = %v, want %v", order, want)
+		}
+	}
+}
+
+func TestUploader_PriorityMovesUpQueuedJobAndUploadsOnce(t *testing.T) {
+	var mu sync.Mutex
+	uploads := 0
+	u := newTestUploader(func(_ context.Context, item entity.MemeSearchResult) (string, error) {
+		mu.Lock()
+		defer mu.Unlock()
+		uploads++
+		return "file-" + item.Id, nil
+	})
+
+	item := entity.MemeSearchResult{Id: "meme"}
+	u.EnqueueMaybe(item)
+	got := make(chan string, 1)
+	u.EnqueuePriority(item, func(fileId string, err error) {
+		if err != nil {
+			t.Errorf("unexpected error: %v", err)
+		}
+		got <- fileId
+	})
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	go u.worker(ctx)
+
+	select {
+	case fileId := <-got:
+		if fileId != "file-meme" {
+			t.Errorf("fileId = %q, want file-meme", fileId)
+		}
+	case <-time.After(time.Second):
+		t.Fatal("callback not called")
+	}
+	// Let the worker drain the stale ordinary copy of the job.
+	waitUntil(t, func() bool { return len(u.queue) == 0 })
+	time.Sleep(20 * time.Millisecond)
+
+	mu.Lock()
+	defer mu.Unlock()
+	if uploads != 1 {
+		t.Errorf("uploads = %d, want 1", uploads)
+	}
+}
+
+func TestUploader_PriorityWithoutServiceChatFailsImmediately(t *testing.T) {
+	u := newTestUploader(nil)
+	u.chatId = 0
+
+	var gotErr error
+	u.EnqueuePriority(entity.MemeSearchResult{Id: "meme"}, func(_ string, err error) { gotErr = err })
+
+	if !errors.Is(gotErr, errServiceChatDisabled) {
+		t.Errorf("err = %v, want errServiceChatDisabled", gotErr)
+	}
+}
+
+func waitUntil(t *testing.T, cond func() bool) {
+	t.Helper()
+	deadline := time.Now().Add(time.Second)
+	for !cond() {
+		if time.Now().After(deadline) {
+			t.Fatal("condition not met in time")
+		}
+		time.Sleep(5 * time.Millisecond)
 	}
 }

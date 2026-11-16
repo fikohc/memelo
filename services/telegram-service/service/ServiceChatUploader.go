@@ -3,296 +3,184 @@ package service
 import (
 	"context"
 	"errors"
-	"fmt"
 	"log/slog"
-	"net/http"
 	"sync"
-	"time"
 
-	"github.com/fikohc/memelo/common/helper"
 	"github.com/fikohc/memelo/telegram-service/conf"
 	"github.com/fikohc/memelo/telegram-service/entity"
-	"github.com/fikohc/memelo/telegram-service/storage"
-	"github.com/google/uuid"
-	"github.com/gotd/td/fileid"
-	"github.com/gotd/td/telegram"
-	"github.com/gotd/td/telegram/message"
-	"github.com/gotd/td/telegram/message/styling"
-	"github.com/gotd/td/telegram/message/unpack"
-	"github.com/gotd/td/telegram/uploader"
-	"github.com/gotd/td/tg"
 	"go.uber.org/fx"
 )
 
 const (
-	serviceChatQueueSize   = 64
-	serviceChatWorkers     = 2
-	serviceChatMaxAttempts = 3
-	// Bot API channel ids are -100<channel id>.
-	botApiChannelIdOffset = -1000000000000
+	serviceChatQueueSize         = 64
+	serviceChatPriorityQueueSize = 32
+	serviceChatWorkers           = 2
 )
 
-// BackgroundServiceChatUploader uploads meme media (videos and images) to the private
-// service chat over MTProto and caches the resulting Bot API file_id, so
-// inline results can send cached media instead of URLs (Telegram fetches
+// BackgroundServiceChatUploader queues uploads of meme media to the service
+// chat and runs them on background workers through ServiceChatMediaUploader,
+// so inline results can send cached media instead of URLs (Telegram fetches
 // URLs only up to 5 MB for photos and 20 MB for videos).
 type BackgroundServiceChatUploader interface {
-	// Enqueue schedules a background upload. It never blocks; duplicates of
+	// EnqueueMaybe schedules a background upload. It never blocks; duplicates of
 	// an in-flight upload and overflow of the queue are dropped.
-	Enqueue(item entity.MemeSearchResult)
+	EnqueueMaybe(item entity.MemeSearchResult)
+
+	// EnqueuePriority schedules an upload ahead of everything queued with
+	// Enqueue and calls cb with the resulting file_id or error once it is done.
+	// An item already waiting in the ordinary queue is moved up. It never
+	// blocks; if the upload can't be scheduled, cb is called immediately.
+	EnqueuePriority(item entity.MemeSearchResult, cb UploadCallback)
+}
+
+// UploadCallback receives the Bot API file_id of an uploaded item, or the
+// upload error. It is called from an upload worker and must not block.
+type UploadCallback func(fileId string, err error)
+
+var (
+	errServiceChatDisabled  = errors.New("service chat upload is disabled")
+	errServiceChatQueueFull = errors.New("service chat priority queue is full")
+)
+
+// uploadJob is one pending upload. A job can sit in both queues when it is
+// moved up to the priority queue; started makes sure it runs only once.
+type uploadJob struct {
+	item      entity.MemeSearchResult
+	callbacks []UploadCallback
+	started   bool
 }
 
 type BackgroundServiceChatUploaderImpl struct {
-	mtproto MtprotoClient
-	cache   storage.MediaFileCacheStorage
-	chatId  int64
-	log     *slog.Logger
+	uploader ServiceChatMediaUploader
+	chatId   int64
+	log      *slog.Logger
 
-	queue    chan entity.MemeSearchResult
-	inflight sync.Map
+	queue         chan *uploadJob
+	priorityQueue chan *uploadJob
 
-	peerMu sync.Mutex
-	peer   tg.InputPeerClass
+	jobsMu sync.Mutex
+	jobs   map[string]*uploadJob
 }
 
-func (u *BackgroundServiceChatUploaderImpl) Enqueue(item entity.MemeSearchResult) {
+func (u *BackgroundServiceChatUploaderImpl) EnqueueMaybe(item entity.MemeSearchResult) {
 	if u.chatId == 0 {
 		return
 	}
-	if _, loaded := u.inflight.LoadOrStore(item.Id, struct{}{}); loaded {
+
+	u.jobsMu.Lock()
+	defer u.jobsMu.Unlock()
+	if _, exists := u.jobs[item.Id]; exists {
 		return
 	}
+	job := &uploadJob{item: item}
 	select {
-	case u.queue <- item:
+	case u.queue <- job:
+		u.jobs[item.Id] = job
 	default:
-		u.inflight.Delete(item.Id)
 		u.log.Warn("Service chat upload queue is full, dropping", "memeId", item.Id)
+	}
+}
+
+func (u *BackgroundServiceChatUploaderImpl) EnqueuePriority(item entity.MemeSearchResult, cb UploadCallback) {
+	if u.chatId == 0 {
+		cb("", errServiceChatDisabled)
+		return
+	}
+
+	u.jobsMu.Lock()
+	job, exists := u.jobs[item.Id]
+	if exists {
+		job.callbacks = append(job.callbacks, cb)
+		if job.started {
+			u.jobsMu.Unlock()
+			return
+		}
+	} else {
+		job = &uploadJob{item: item, callbacks: []UploadCallback{cb}}
+	}
+
+	select {
+	case u.priorityQueue <- job:
+		u.jobs[item.Id] = job
+		u.jobsMu.Unlock()
+	default:
+		if exists {
+			// Still waiting in the ordinary queue; cb runs when it gets there.
+			u.jobsMu.Unlock()
+			u.log.Warn("Service chat priority queue is full, keeping ordinary position", "memeId", item.Id)
+			return
+		}
+		u.jobsMu.Unlock()
+		u.log.Warn("Service chat priority queue is full, dropping", "memeId", item.Id)
+		cb("", errServiceChatQueueFull)
 	}
 }
 
 func (u *BackgroundServiceChatUploaderImpl) worker(ctx context.Context) {
 	for {
-		select {
-		case <-ctx.Done():
+		job, ok := u.nextJob(ctx)
+		if !ok {
 			return
-		case item := <-u.queue:
-			if err := u.uploadWithRetry(ctx, item); err != nil {
-				u.log.ErrorContext(ctx, "Service chat upload failed", "memeId", item.Id, "error", err)
-			}
-			u.inflight.Delete(item.Id)
 		}
+		u.run(ctx, job)
 	}
 }
 
-func (u *BackgroundServiceChatUploaderImpl) uploadWithRetry(ctx context.Context, item entity.MemeSearchResult) error {
-	var err error
-	for attempt := 1; attempt <= serviceChatMaxAttempts; attempt++ {
-		err = u.upload(ctx, item)
-		if err == nil {
-			return nil
-		}
-		wait, ok := telegram.AsFloodWait(err)
-		if !ok {
-			return err
-		}
-		u.log.WarnContext(ctx, "Service chat upload hit flood wait", "memeId", item.Id, "wait", wait)
-		select {
-		case <-time.After(wait):
-		case <-ctx.Done():
-			return ctx.Err()
-		}
-	}
-	return err
-}
-
-func (u *BackgroundServiceChatUploaderImpl) upload(ctx context.Context, item entity.MemeSearchResult) error {
-	memeId, err := uuid.Parse(item.Id)
-	if err != nil {
-		return fmt.Errorf("parse meme id: %w", err)
-	}
-
-	peer, err := u.resolvePeer(ctx)
-	if err != nil {
-		return err
-	}
-
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, item.MediaUrl, nil)
-	if err != nil {
-		return fmt.Errorf("create media request: %w", err)
-	}
-	resp, err := http.DefaultClient.Do(req)
-	if err != nil {
-		return fmt.Errorf("download media: %w", err)
-	}
-	defer helper.QuietClose(resp.Body, u.log)
-	if resp.StatusCode >= 400 {
-		return fmt.Errorf("download media: non-2xx status: %d", resp.StatusCode)
-	}
-	if resp.ContentLength <= 0 {
-		return errors.New("download media: unknown content length")
-	}
-
-	media, filename, err := u.mediaOption(item)
-	if err != nil {
-		return err
-	}
-
-	api := u.mtproto.API()
-	file, err := uploader.NewUploader(api).Upload(ctx, uploader.NewUpload(filename, resp.Body, resp.ContentLength))
-	if err != nil {
-		return fmt.Errorf("mtproto upload: %w", err)
-	}
-
-	posted, err := unpack.Message(message.NewSender(api).To(peer).Media(ctx, media(file)))
-	if err != nil {
-		return fmt.Errorf("post to service chat: %w", err)
-	}
-
-	fileId, err := botApiFileId(posted, item.Type)
-	if err != nil {
-		return err
-	}
-
-	err = u.cache.Save(ctx, &entity.MediaFileCache{
-		MemeId: memeId,
-		Type:   item.Type,
-		FileId: fileId,
-		Size:   resp.ContentLength,
-	})
-	if err != nil {
-		return err
-	}
-
-	u.log.InfoContext(ctx, "Media uploaded to service chat",
-		"memeId", item.Id,
-		"type", item.Type,
-		"messageId", posted.ID,
-		"size", resp.ContentLength)
-	return nil
-}
-
-// mediaOption returns how an uploaded file is posted: videos as streamable
-// video documents, images as photos.
-func (u *BackgroundServiceChatUploaderImpl) mediaOption(item entity.MemeSearchResult) (func(tg.InputFileClass) message.MediaOption, string, error) {
-	caption := styling.Plain(item.Id)
-	switch item.Type {
-	case entity.ResultTypeVideo:
-		return func(file tg.InputFileClass) message.MediaOption {
-			return message.UploadedDocument(file, caption).
-				MIME("video/mp4").
-				Filename("video.mp4").
-				Attributes(&tg.DocumentAttributeVideo{
-					SupportsStreaming: true,
-					W:                 item.MediaWidth,
-					H:                 item.MediaHeight,
-				})
-		}, "video.mp4", nil
-	case entity.ResultTypeImage:
-		return func(file tg.InputFileClass) message.MediaOption {
-			return message.UploadedPhoto(file, caption)
-		}, "image.jpg", nil
-	}
-	return nil, "", fmt.Errorf("unsupported media type %q", item.Type)
-}
-
-// botApiFileId encodes the Bot API file_id of the media in the posted
-// service chat message. The post is kept: the file reference inside the
-// file_id stays valid while it exists.
-func botApiFileId(posted *tg.Message, mediaType string) (string, error) {
-	var fid fileid.FileID
-	switch media := posted.Media.(type) {
-	case *tg.MessageMediaDocument:
-		doc, ok := media.Document.AsNotEmpty()
-		if !ok || mediaType != entity.ResultTypeVideo {
-			return "", fmt.Errorf("service chat message %d: unexpected document for %s", posted.ID, mediaType)
-		}
-		fid = fileid.FromDocument(doc)
-		if fid.Type != fileid.Video {
-			return "", fmt.Errorf("service chat message %d: document is %s, not a video", posted.ID, fid.Type)
-		}
-	case *tg.MessageMediaPhoto:
-		photo, ok := media.Photo.(*tg.Photo)
-		if !ok || mediaType != entity.ResultTypeImage {
-			return "", fmt.Errorf("service chat message %d: unexpected photo for %s", posted.ID, mediaType)
-		}
-		thumbType, ok := largestPhotoSizeType(photo)
-		if !ok {
-			return "", fmt.Errorf("service chat message %d: photo has no sizes", posted.ID)
-		}
-		fid = fileid.FromPhoto(photo, thumbType)
+// nextJob takes a priority job if there is one, otherwise waits for either queue.
+func (u *BackgroundServiceChatUploaderImpl) nextJob(ctx context.Context) (*uploadJob, bool) {
+	select {
+	case job := <-u.priorityQueue:
+		return job, true
 	default:
-		return "", fmt.Errorf("service chat message %d: unexpected media %T", posted.ID, posted.Media)
 	}
+	select {
+	case <-ctx.Done():
+		return nil, false
+	case job := <-u.priorityQueue:
+		return job, true
+	case job := <-u.queue:
+		return job, true
+	}
+}
 
-	encoded, err := fileid.EncodeFileID(fid)
+func (u *BackgroundServiceChatUploaderImpl) run(ctx context.Context, job *uploadJob) {
+	u.jobsMu.Lock()
+	if job.started {
+		// Moved up to the priority queue and already taken from there.
+		u.jobsMu.Unlock()
+		return
+	}
+	job.started = true
+	u.jobsMu.Unlock()
+
+	fileId, err := u.uploader.Upload(ctx, job.item)
 	if err != nil {
-		return "", fmt.Errorf("service chat message %d: encode file id: %w", posted.ID, err)
+		u.log.ErrorContext(ctx, "Service chat upload failed", "memeId", job.item.Id, "error", err)
 	}
-	return encoded, nil
+
+	u.jobsMu.Lock()
+	delete(u.jobs, job.item.Id)
+	callbacks := job.callbacks
+	u.jobsMu.Unlock()
+
+	for _, cb := range callbacks {
+		cb(fileId, err)
+	}
 }
 
-// largestPhotoSizeType returns the size type (e.g. 'y') of the biggest
-// variant of a photo; the Bot API file_id of a photo points to one size.
-func largestPhotoSizeType(photo *tg.Photo) (rune, bool) {
-	var sizeType string
-	maxArea := -1
-	for _, size := range photo.Sizes {
-		var w, h int
-		var typ string
-		switch s := size.(type) {
-		case *tg.PhotoSize:
-			w, h, typ = s.W, s.H, s.Type
-		case *tg.PhotoSizeProgressive:
-			w, h, typ = s.W, s.H, s.Type
-		default:
-			continue
-		}
-		if area := w * h; area > maxArea && typ != "" {
-			maxArea, sizeType = area, typ
-		}
-	}
-	if sizeType == "" {
-		return 0, false
-	}
-	return []rune(sizeType)[0], true
-}
-
-func (u *BackgroundServiceChatUploaderImpl) resolvePeer(ctx context.Context) (tg.InputPeerClass, error) {
-	u.peerMu.Lock()
-	defer u.peerMu.Unlock()
-	if u.peer != nil {
-		return u.peer, nil
-	}
-
-	channelId := botApiChannelIdOffset - u.chatId
-	// Bots may pass access_hash 0 for channels they are a member of.
-	chats, err := u.mtproto.API().ChannelsGetChannels(ctx, []tg.InputChannelClass{
-		&tg.InputChannel{ChannelID: channelId},
-	})
-	if err != nil {
-		return nil, fmt.Errorf("resolve service chat %d: %w", u.chatId, err)
-	}
-	for _, chat := range chats.GetChats() {
-		if channel, ok := chat.(*tg.Channel); ok && channel.ID == channelId {
-			u.peer = channel.AsInputPeer()
-			return u.peer, nil
-		}
-	}
-	return nil, fmt.Errorf("resolve service chat %d: channel not found", u.chatId)
-}
-
-func NewServiceChatUploader(
+func NewBackgroundServiceChatUploader(
 	lc fx.Lifecycle,
-	mtproto MtprotoClient,
-	cache storage.MediaFileCacheStorage,
+	uploader ServiceChatMediaUploader,
 	cfg *conf.Config,
 ) BackgroundServiceChatUploader {
 	u := &BackgroundServiceChatUploaderImpl{
-		mtproto: mtproto,
-		cache:   cache,
-		chatId:  cfg.Telegram.ServiceChatId,
-		log:     slog.With("service", "ServiceChatUploader"),
-		queue:   make(chan entity.MemeSearchResult, serviceChatQueueSize),
+		uploader: uploader,
+		chatId:   cfg.Telegram.ServiceChatId,
+		log:      slog.With("service", "BackgroundServiceChatUploader"),
+
+		queue:         make(chan *uploadJob, serviceChatQueueSize),
+		priorityQueue: make(chan *uploadJob, serviceChatPriorityQueueSize),
+		jobs:          make(map[string]*uploadJob),
 	}
 	if u.chatId == 0 {
 		u.log.Warn("telegram.ServiceChatId is not set, media won't be cached in the service chat")
