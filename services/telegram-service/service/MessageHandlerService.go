@@ -8,6 +8,7 @@ import (
 	"log/slog"
 	"strings"
 	"time"
+	"unicode/utf16"
 
 	"github.com/fikohc/memelo/common/helper"
 	commonservice "github.com/fikohc/memelo/common/service"
@@ -29,6 +30,16 @@ type MessageHandlerService interface {
 const (
 	parseMode    = "Markdown"
 	msgForbidden = "You are not allowed to perform this action."
+
+	// telegramMaxMessageLength is the Bot API limit for a message text,
+	// counted in UTF-16 code units.
+	telegramMaxMessageLength = 4096
+	truncationSuffix         = "..."
+
+	memeCreatedFormat = " Text: ```\n%s\n```\n" +
+		" Caption: `%s`\n" +
+		" ID: `%s` \n" +
+		" Status: `%s`"
 
 	// duplicateStatus is the CreateMemeStatus name of an already stored meme.
 	duplicateStatus = "STATUS_DUPLICATE"
@@ -70,18 +81,7 @@ func (m MessageHandlerServiceImpl) ProcessImageMessage(ctx context.Context, mess
 			"imageId", result.Id,
 			"duplicate", result.DuplicateStatus)
 
-		return &MessageHandlerResponse{
-			Message: fmt.Sprintf(
-				" Text: ```\n%s\n```\n"+
-					" Caption: `%s`\n"+
-					" ID: `%s` \n"+
-					" Status: `%s`",
-				result.Text,
-				result.Caption,
-				result.Id,
-				result.DuplicateStatus),
-			ParseMode: parseMode,
-		}, nil
+		return memeCreatedResponse(result), nil
 	})
 }
 
@@ -104,18 +104,7 @@ func (m MessageHandlerServiceImpl) ProcessVideoMessage(ctx context.Context, mess
 			"memeId", result.Id,
 			"duplicate", result.DuplicateStatus)
 
-		return &MessageHandlerResponse{
-			Message: fmt.Sprintf(
-				" Text: ```\n%s\n```\n"+
-					" Caption: `%s`\n"+
-					" ID: `%s` \n"+
-					" Status: `%s`",
-				result.Text,
-				result.Caption,
-				result.Id,
-				result.DuplicateStatus),
-			ParseMode: parseMode,
-		}, nil
+		return memeCreatedResponse(result), nil
 	})
 }
 
@@ -151,18 +140,7 @@ func (m MessageHandlerServiceImpl) ProcessDocumentMessage(ctx context.Context, m
 			"memeId", result.Id,
 			"duplicate", result.DuplicateStatus)
 
-		return &MessageHandlerResponse{
-			Message: fmt.Sprintf(
-				" Text: ```\n%s\n```\n"+
-					" Caption: `%s`\n"+
-					" ID: `%s` \n"+
-					" Status: `%s`",
-				result.Text,
-				result.Caption,
-				result.Id,
-				result.DuplicateStatus),
-			ParseMode: parseMode,
-		}, nil
+		return memeCreatedResponse(result), nil
 	})
 }
 
@@ -215,18 +193,7 @@ func (m MessageHandlerServiceImpl) ProcessYouTubeMessage(ctx context.Context, me
 			"memeId", result.Id,
 			"duplicate", result.DuplicateStatus)
 
-		return &MessageHandlerResponse{
-			Message: fmt.Sprintf(
-				" Text: ```\n%s\n```\n"+
-					" Caption: `%s`\n"+
-					" ID: `%s` \n"+
-					" Status: `%s`",
-				result.Text,
-				result.Caption,
-				result.Id,
-				result.DuplicateStatus),
-			ParseMode: parseMode,
-		}, nil
+		return memeCreatedResponse(result), nil
 	})
 }
 
@@ -294,6 +261,46 @@ func (m MessageHandlerServiceImpl) cacheFileId(ctx context.Context, result *enti
 	if err != nil {
 		m.slogger.ErrorContext(ctx, "Failed to cache media file id", "memeId", result.Id, "error", err)
 	}
+}
+
+// memeCreatedResponse formats the reply to a created meme. If it exceeds the
+// Telegram message limit, the extracted Text is shortened and ends with "...".
+func memeCreatedResponse(result *entity.MemeCreateResult) *MessageHandlerResponse {
+	format := func(text string) string {
+		return fmt.Sprintf(memeCreatedFormat, text, result.Caption, result.Id, result.DuplicateStatus)
+	}
+
+	message := format(result.Text)
+	if over := utf16Len(message) - telegramMaxMessageLength; over > 0 {
+		keep := utf16Len(result.Text) - over - utf16Len(truncationSuffix)
+		message = format(truncateUtf16(result.Text, keep) + truncationSuffix)
+	}
+
+	return &MessageHandlerResponse{
+		Message:   message,
+		ParseMode: parseMode,
+	}
+}
+
+func utf16Len(s string) int {
+	n := 0
+	for _, r := range s {
+		n += utf16.RuneLen(r)
+	}
+	return n
+}
+
+// truncateUtf16 returns the longest prefix of s that fits in limit UTF-16
+// code units, never splitting a rune.
+func truncateUtf16(s string, limit int) string {
+	n := 0
+	for i, r := range s {
+		n += utf16.RuneLen(r)
+		if n > limit {
+			return s[:i]
+		}
+	}
+	return s
 }
 
 func NewMessageHandlerService(
