@@ -18,6 +18,7 @@ postgres:
 
 inline:
   PageSize: 20
+  LargeMediaThresholdMb: 20
 
 
 storage-service:

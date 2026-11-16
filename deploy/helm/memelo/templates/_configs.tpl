@@ -170,6 +170,7 @@ mtproto:
 
 inline:
   PageSize: 20
+  LargeMediaThresholdMb: {{ .Values.telegram.largeMediaThresholdMb | int64 }}
 
 storage-service:
   Uri: "http://storage-service:{{ (index .Values.services "storage-service").port }}"

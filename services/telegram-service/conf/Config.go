@@ -26,6 +26,10 @@ type PostgresConfig struct {
 
 type InlineConfig struct {
 	PageSize int
+	// LargeMediaThresholdMb is the size above which uncached media is not
+	// sent by URL but uploaded with priority (Telegram fetches URLs only up
+	// to 20 MB). Defaults to 20 when unset.
+	LargeMediaThresholdMb int64
 }
 
 type StorageServiceConfig struct {

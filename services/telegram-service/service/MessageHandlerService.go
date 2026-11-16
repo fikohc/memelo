@@ -54,6 +54,7 @@ type MessageHandlerServiceImpl struct {
 	storage           StorageConnector
 	fileDownloader    TelegramFileDownloader
 	mediaCache        tgstorage.MediaFileCacheStorage
+	sizeProber        MediaSizeProber
 	permissionService PermissionService
 	tmpDataService    commonservice.TmpDataService
 	youtubeConnector  YouTubeConnector
@@ -75,7 +76,7 @@ func (m MessageHandlerServiceImpl) ProcessImageMessage(ctx context.Context, mess
 		if err != nil {
 			return nil, err
 		}
-		m.cacheFileId(ctx, result, entity.ResultTypeImage, photo.FileID, photo.FileUniqueID, int64(photo.FileSize))
+		m.cacheFileId(ctx, result, entity.ResultTypeImage, photo.FileID, photo.FileUniqueID)
 
 		m.slogger.InfoContext(ctx, "meme created",
 			"imageId", result.Id,
@@ -98,7 +99,7 @@ func (m MessageHandlerServiceImpl) ProcessVideoMessage(ctx context.Context, mess
 		if err != nil {
 			return nil, err
 		}
-		m.cacheFileId(ctx, result, entity.ResultTypeVideo, message.Video.FileID, message.Video.FileUniqueID, int64(message.Video.FileSize))
+		m.cacheFileId(ctx, result, entity.ResultTypeVideo, message.Video.FileID, message.Video.FileUniqueID)
 
 		m.slogger.InfoContext(ctx, "video meme created",
 			"memeId", result.Id,
@@ -247,10 +248,22 @@ func (m MessageHandlerServiceImpl) downloadToS3(ctx context.Context, fileId stri
 // can send it as cached media without a service chat upload.
 // Duplicates are skipped: the returned id belongs to another stored meme.
 // Documents are not cached: their file_id is not accepted as a cached photo/video.
-func (m MessageHandlerServiceImpl) cacheFileId(ctx context.Context, result *entity.MemeCreateResult, mediaType string, fileId string, fileUniqueId string, size int64) {
+// The size stored is that of the media in S3, which storage-service may have
+// converted, not the size of the file the user sent.
+func (m MessageHandlerServiceImpl) cacheFileId(ctx context.Context, result *entity.MemeCreateResult, mediaType string, fileId string, fileUniqueId string) {
 	if result.DuplicateStatus == duplicateStatus {
 		return
 	}
+
+	var size int64
+	if result.MediaUrl == "" {
+		m.slogger.WarnContext(ctx, "Created meme has no media url, caching file id without size", "memeId", result.Id)
+	} else if s3Size, err := m.sizeProber.Size(ctx, result.MediaUrl); err != nil {
+		m.slogger.WarnContext(ctx, "Failed to get S3 media size, caching file id without size", "memeId", result.Id, "error", err)
+	} else {
+		size = s3Size
+	}
+
 	err := m.mediaCache.Save(ctx, &entity.MediaFileCache{
 		MemeId:       result.Id,
 		Type:         mediaType,
@@ -307,6 +320,7 @@ func NewMessageHandlerService(
 	storage StorageConnector,
 	fileDownloader TelegramFileDownloader,
 	mediaCache tgstorage.MediaFileCacheStorage,
+	sizeProber MediaSizeProber,
 	permissionService PermissionService,
 	tmpDataService commonservice.TmpDataService,
 	youtubeConnector YouTubeConnector,
@@ -317,6 +331,7 @@ func NewMessageHandlerService(
 		storage:           storage,
 		fileDownloader:    fileDownloader,
 		mediaCache:        mediaCache,
+		sizeProber:        sizeProber,
 		permissionService: permissionService,
 		tmpDataService:    tmpDataService,
 		youtubeConnector:  youtubeConnector,

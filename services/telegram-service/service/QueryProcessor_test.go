@@ -6,6 +6,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/fikohc/memelo/telegram-service/conf"
 	"github.com/fikohc/memelo/telegram-service/entity"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	"github.com/google/uuid"
@@ -137,7 +138,7 @@ func (f *fakeMediaSizeProber) Size(_ context.Context, url string) (int64, error)
 }
 
 func newTestInlineResultBuilder(cache *fakeMediaFileCache, uploader *fakeServiceChatUploader, prober *fakeMediaSizeProber) *InlineResultBuilderImpl {
-	builder := NewInlineResultBuilder(cache, uploader, prober).(*InlineResultBuilderImpl)
+	builder := NewInlineResultBuilder(cache, uploader, prober, &conf.Config{Inline: &conf.InlineConfig{}}).(*InlineResultBuilderImpl)
 	builder.largeMediaWait = 50 * time.Millisecond
 	return builder
 }
@@ -317,5 +318,21 @@ func TestInlineResultBuilder_FallsBackToUrlWhenCacheFails(t *testing.T) {
 	}
 	if _, ok := results[0].(tgbotapi.InlineQueryResultVideo); !ok {
 		t.Errorf("got %T, want InlineQueryResultVideo", results[0])
+	}
+}
+
+func TestNewInlineResultBuilder_LargeMediaThreshold(t *testing.T) {
+	for _, tc := range []struct {
+		configuredMb int64
+		wantBytes    int64
+	}{
+		{configuredMb: 0, wantBytes: 20 << 20},
+		{configuredMb: 50, wantBytes: 50 << 20},
+	} {
+		cfg := &conf.Config{Inline: &conf.InlineConfig{LargeMediaThresholdMb: tc.configuredMb}}
+		builder := NewInlineResultBuilder(&fakeMediaFileCache{}, &fakeServiceChatUploader{}, &fakeMediaSizeProber{}, cfg).(*InlineResultBuilderImpl)
+		if builder.largeMediaBytes != tc.wantBytes {
+			t.Errorf("configured %d MB: threshold = %d bytes, want %d", tc.configuredMb, builder.largeMediaBytes, tc.wantBytes)
+		}
 	}
 }

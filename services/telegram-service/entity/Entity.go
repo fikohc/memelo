@@ -30,6 +30,8 @@ type MemeCreateResult struct {
 	Text            string
 	Caption         string
 	DuplicateStatus string
+	// MediaUrl is a presigned URL of the stored original media in S3.
+	MediaUrl string
 }
 
 type YouTubeJobStatus struct {

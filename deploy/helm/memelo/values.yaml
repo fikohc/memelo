@@ -97,6 +97,11 @@ openrouter:
   extractorModelVideo: "google/gemini-3-flash-preview"
   extractorModelAudio: "google/gemini-3-flash-preview"
 
+telegram:
+  # Uncached inline media above this size (MB) is uploaded to the service chat
+  # with priority instead of being sent by URL (Telegram URL limit is 20 MB).
+  largeMediaThresholdMb: 20
+
 webapp:
   # webapp-service is now served at its own domain root, no shared proxy prefix.
   baseUrl: "/"

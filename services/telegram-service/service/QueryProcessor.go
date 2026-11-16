@@ -42,9 +42,10 @@ type QueryProcessorFactory interface {
 }
 
 const (
-	// largeMediaThreshold is the largest media Telegram fetches by URL for
-	// inline results; bigger media can only be sent by cached file_id.
-	largeMediaThreshold = 20 << 20
+	// defaultLargeMediaThresholdMb is the largest media Telegram fetches by
+	// URL for inline results; bigger media can only be sent by cached file_id.
+	// Used when inline.LargeMediaThresholdMb is not configured.
+	defaultLargeMediaThresholdMb = 20
 	// largeMediaWaitTimeout bounds how long an inline query waits for
 	// priority uploads of large media; Telegram expects an answer within ~10 s.
 	largeMediaWaitTimeout = 5 * time.Second
@@ -53,8 +54,9 @@ const (
 
 // InlineResultBuilder converts search results into Telegram inline results.
 // Media with a cached Bot API file_id is sent as a cached photo/video. Other
-// media up to 20 MB is sent by URL and queued for a background upload to the
-// service chat. Larger media can't be sent by URL at all: it is uploaded
+// media up to the large media threshold (20 MB by default) is sent by URL and
+// queued for a background upload to the service chat. Larger media can't be
+// sent by URL at all: it is uploaded
 // with priority while the query waits, and left out if that takes too long.
 type InlineResultBuilder interface {
 	Build(ctx context.Context, results []entity.MemeSearchResult, mark string) ([]any, error)
@@ -64,6 +66,7 @@ type InlineResultBuilderImpl struct {
 	cache              tgstorage.MediaFileCacheStorage
 	backgroundUploader BackgroundServiceChatUploader
 	sizeProber         MediaSizeProber
+	largeMediaBytes    int64
 	largeMediaWait     time.Duration
 	log                *slog.Logger
 }
@@ -157,15 +160,13 @@ func inlineResult(item entity.MemeSearchResult, fileId string, cached bool, mark
 }
 
 // largeMedia probes the sizes of the given media in parallel and returns the
-// ids of those over largeMediaThreshold. Media whose size can't be probed is
+// ids of those over the large media threshold. Media whose size can't be probed is
 // treated as small, so it still gets a URL result.
 func (b *InlineResultBuilderImpl) largeMedia(ctx context.Context, items []entity.MemeSearchResult) map[string]bool {
 	sizes := make([]int64, len(items))
 	var wg sync.WaitGroup
 	for i, item := range items {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
+		wg.Go(func() {
 			probeCtx, cancel := context.WithTimeout(ctx, mediaSizeProbeTimeout)
 			defer cancel()
 			size, err := b.sizeProber.Size(probeCtx, item.MediaUrl)
@@ -174,13 +175,13 @@ func (b *InlineResultBuilderImpl) largeMedia(ctx context.Context, items []entity
 				return
 			}
 			sizes[i] = size
-		}()
+		})
 	}
 	wg.Wait()
 
 	large := make(map[string]bool)
 	for i, item := range items {
-		if sizes[i] > largeMediaThreshold {
+		if sizes[i] > b.largeMediaBytes {
 			large[item.Id] = true
 		}
 	}
@@ -265,11 +266,17 @@ func NewInlineResultBuilder(
 	cache tgstorage.MediaFileCacheStorage,
 	uploader BackgroundServiceChatUploader,
 	sizeProber MediaSizeProber,
+	cfg *conf.Config,
 ) InlineResultBuilder {
+	thresholdMb := cfg.Inline.LargeMediaThresholdMb
+	if thresholdMb <= 0 {
+		thresholdMb = defaultLargeMediaThresholdMb
+	}
 	return &InlineResultBuilderImpl{
 		cache:              cache,
 		backgroundUploader: uploader,
 		sizeProber:         sizeProber,
+		largeMediaBytes:    thresholdMb << 20,
 		largeMediaWait:     largeMediaWaitTimeout,
 		log:                slog.With("service", "InlineResultBuilder"),
 	}
