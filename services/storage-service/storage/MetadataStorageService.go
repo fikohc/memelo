@@ -37,6 +37,10 @@ var sortFieldsCreated = []string{createdField}
 var sortFieldsScore = []string{scoreField, imageIdField}
 var sortFieldsImageId = []string{imageIdField}
 
+// hybridKnnK is the number of nearest neighbours taken by hybrid search; it must
+// not depend on page size, otherwise search_after pages past the kNN set are empty.
+const hybridKnnK = 500
+
 // extractSortKey builds an ElasticSortKey from the last hit's Sort values,
 // using sortFields to name the values in order.
 func extractSortKey(resp *search.Response) entity.ElasticSortKey {
@@ -451,7 +455,7 @@ func (e *ElasticMetadataStorageServiceImpl) SearchHybridOrderByScore(
 	if tq := e.typeQuery(metadataType); tq != nil {
 		knnFilters = append(knnFilters, *tq)
 	}
-	knnQuery := e.embeddingV1KnnAllQueryWithFilters(embedding, knnFilters, pageSize)
+	knnQuery := e.embeddingV1KnnAllQueryWithFilters(embedding, knnFilters, hybridKnnK)
 
 	searchReq := e.client.Search().
 		Index(e.indexName).

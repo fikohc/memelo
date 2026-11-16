@@ -125,6 +125,9 @@ ingress:
     - 91.108.4.0/22
   maxBodySize: "100m"
   proxyReadTimeoutSeconds: 600
+  # Realm shown in the browser's basic-auth prompt. Basic auth on the webapp
+  # ingress is enabled only when secrets.htpasswdEntry is set.
+  basicAuthRealm: "Authentication Required"
 
 # --- Secrets placeholder ---
 # Populated by merging a decrypted SOPS values file at install time, e.g.:
