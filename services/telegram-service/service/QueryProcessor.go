@@ -183,6 +183,11 @@ func (b *InlineResultBuilderImpl) largeMedia(ctx context.Context, items []entity
 	for i, item := range items {
 		if sizes[i] > b.largeMediaBytes {
 			large[item.Id] = true
+			b.log.InfoContext(ctx, "Marked for priority upload",
+				"memeId", item.Id,
+				"type", item.Type,
+				"size", sizes[i],
+				"thresholdBytes", b.largeMediaBytes)
 		}
 	}
 	return large

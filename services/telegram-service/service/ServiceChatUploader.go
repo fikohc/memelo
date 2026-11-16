@@ -5,6 +5,7 @@ import (
 	"errors"
 	"log/slog"
 	"sync"
+	"time"
 
 	"github.com/fikohc/memelo/telegram-service/conf"
 	"github.com/fikohc/memelo/telegram-service/entity"
@@ -45,10 +46,16 @@ var (
 // uploadJob is one pending upload. A job can sit in both queues when it is
 // moved up to the priority queue; started makes sure it runs only once.
 type uploadJob struct {
-	item      entity.MemeSearchResult
-	callbacks []UploadCallback
-	started   bool
+	item       entity.MemeSearchResult
+	callbacks  []UploadCallback
+	started    bool
+	enqueuedAt time.Time
 }
+
+const (
+	queueOrdinary = "ordinary"
+	queuePriority = "priority"
+)
 
 type BackgroundServiceChatUploaderImpl struct {
 	uploader ServiceChatMediaUploader
@@ -72,7 +79,7 @@ func (u *BackgroundServiceChatUploaderImpl) EnqueueMaybe(item entity.MemeSearchR
 	if _, exists := u.jobs[item.Id]; exists {
 		return
 	}
-	job := &uploadJob{item: item}
+	job := &uploadJob{item: item, enqueuedAt: time.Now()}
 	select {
 	case u.queue <- job:
 		u.jobs[item.Id] = job
@@ -96,7 +103,7 @@ func (u *BackgroundServiceChatUploaderImpl) EnqueuePriority(item entity.MemeSear
 			return
 		}
 	} else {
-		job = &uploadJob{item: item, callbacks: []UploadCallback{cb}}
+		job = &uploadJob{item: item, callbacks: []UploadCallback{cb}, enqueuedAt: time.Now()}
 	}
 
 	select {
@@ -118,50 +125,78 @@ func (u *BackgroundServiceChatUploaderImpl) EnqueuePriority(item entity.MemeSear
 
 func (u *BackgroundServiceChatUploaderImpl) worker(ctx context.Context) {
 	for {
-		job, ok := u.nextJob(ctx)
+		job, queue, ok := u.nextJob(ctx)
 		if !ok {
 			return
 		}
-		u.run(ctx, job)
+		u.run(ctx, job, queue)
 	}
 }
 
-// nextJob takes a priority job if there is one, otherwise waits for either queue.
-func (u *BackgroundServiceChatUploaderImpl) nextJob(ctx context.Context) (*uploadJob, bool) {
+// nextJob takes a priority job if there is one, otherwise waits for either
+// queue. It also returns the name of the queue the job came from.
+func (u *BackgroundServiceChatUploaderImpl) nextJob(ctx context.Context) (*uploadJob, string, bool) {
 	select {
 	case job := <-u.priorityQueue:
-		return job, true
+		return job, queuePriority, true
 	default:
 	}
 	select {
 	case <-ctx.Done():
-		return nil, false
+		return nil, "", false
 	case job := <-u.priorityQueue:
-		return job, true
+		return job, queuePriority, true
 	case job := <-u.queue:
-		return job, true
+		return job, queueOrdinary, true
 	}
 }
 
-func (u *BackgroundServiceChatUploaderImpl) run(ctx context.Context, job *uploadJob) {
+func (u *BackgroundServiceChatUploaderImpl) run(ctx context.Context, job *uploadJob, queue string) {
 	u.jobsMu.Lock()
 	if job.started {
 		// Moved up to the priority queue and already taken from there.
 		u.jobsMu.Unlock()
+		u.log.DebugContext(ctx, "Service chat upload skipped, already taken from priority queue",
+			"memeId", job.item.Id,
+			"queue", queue)
 		return
 	}
 	job.started = true
+	waitingCallbacks := len(job.callbacks)
 	u.jobsMu.Unlock()
 
+	u.log.InfoContext(ctx, "Service chat upload picked up",
+		"memeId", job.item.Id,
+		"type", job.item.Type,
+		"queue", queue,
+		"queuedFor", time.Since(job.enqueuedAt),
+		"waitingCallbacks", waitingCallbacks,
+		"priorityQueueLen", len(u.priorityQueue),
+		"ordinaryQueueLen", len(u.queue))
+
+	started := time.Now()
 	fileId, err := u.uploader.Upload(ctx, job.item)
-	if err != nil {
-		u.log.ErrorContext(ctx, "Service chat upload failed", "memeId", job.item.Id, "error", err)
-	}
 
 	u.jobsMu.Lock()
 	delete(u.jobs, job.item.Id)
 	callbacks := job.callbacks
 	u.jobsMu.Unlock()
+
+	if err != nil {
+		u.log.ErrorContext(ctx, "Service chat upload failed",
+			"memeId", job.item.Id,
+			"queue", queue,
+			"duration", time.Since(started),
+			"callbacks", len(callbacks),
+			"error", err)
+	} else {
+		u.log.InfoContext(ctx, "Service chat upload finished",
+			"memeId", job.item.Id,
+			"type", job.item.Type,
+			"queue", queue,
+			"duration", time.Since(started),
+			"callbacks", len(callbacks))
+	}
 
 	for _, cb := range callbacks {
 		cb(fileId, err)
