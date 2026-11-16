@@ -13,8 +13,8 @@ import (
 	"github.com/fikohc/memelo/telegram-service/conf"
 	"github.com/fikohc/memelo/telegram-service/entity"
 	"github.com/fikohc/memelo/telegram-service/storage"
-	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	"github.com/google/uuid"
+	"github.com/gotd/td/fileid"
 	"github.com/gotd/td/telegram"
 	"github.com/gotd/td/telegram/message"
 	"github.com/gotd/td/telegram/message/styling"
@@ -32,19 +32,18 @@ const (
 	botApiChannelIdOffset = -1000000000000
 )
 
-// ServiceChatUploader uploads meme media (videos and images) to the private
+// BackgroundServiceChatUploader uploads meme media (videos and images) to the private
 // service chat over MTProto and caches the resulting Bot API file_id, so
 // inline results can send cached media instead of URLs (Telegram fetches
 // URLs only up to 5 MB for photos and 20 MB for videos).
-type ServiceChatUploader interface {
+type BackgroundServiceChatUploader interface {
 	// Enqueue schedules a background upload. It never blocks; duplicates of
 	// an in-flight upload and overflow of the queue are dropped.
 	Enqueue(item entity.MemeSearchResult)
 }
 
-type ServiceChatUploaderImpl struct {
+type BackgroundServiceChatUploaderImpl struct {
 	mtproto MtprotoClient
-	bot     *tgbotapi.BotAPI
 	cache   storage.MediaFileCacheStorage
 	chatId  int64
 	log     *slog.Logger
@@ -56,7 +55,7 @@ type ServiceChatUploaderImpl struct {
 	peer   tg.InputPeerClass
 }
 
-func (u *ServiceChatUploaderImpl) Enqueue(item entity.MemeSearchResult) {
+func (u *BackgroundServiceChatUploaderImpl) Enqueue(item entity.MemeSearchResult) {
 	if u.chatId == 0 {
 		return
 	}
@@ -71,7 +70,7 @@ func (u *ServiceChatUploaderImpl) Enqueue(item entity.MemeSearchResult) {
 	}
 }
 
-func (u *ServiceChatUploaderImpl) worker(ctx context.Context) {
+func (u *BackgroundServiceChatUploaderImpl) worker(ctx context.Context) {
 	for {
 		select {
 		case <-ctx.Done():
@@ -85,7 +84,7 @@ func (u *ServiceChatUploaderImpl) worker(ctx context.Context) {
 	}
 }
 
-func (u *ServiceChatUploaderImpl) uploadWithRetry(ctx context.Context, item entity.MemeSearchResult) error {
+func (u *BackgroundServiceChatUploaderImpl) uploadWithRetry(ctx context.Context, item entity.MemeSearchResult) error {
 	var err error
 	for attempt := 1; attempt <= serviceChatMaxAttempts; attempt++ {
 		err = u.upload(ctx, item)
@@ -106,7 +105,7 @@ func (u *ServiceChatUploaderImpl) uploadWithRetry(ctx context.Context, item enti
 	return err
 }
 
-func (u *ServiceChatUploaderImpl) upload(ctx context.Context, item entity.MemeSearchResult) error {
+func (u *BackgroundServiceChatUploaderImpl) upload(ctx context.Context, item entity.MemeSearchResult) error {
 	memeId, err := uuid.Parse(item.Id)
 	if err != nil {
 		return fmt.Errorf("parse meme id: %w", err)
@@ -149,17 +148,16 @@ func (u *ServiceChatUploaderImpl) upload(ctx context.Context, item entity.MemeSe
 		return fmt.Errorf("post to service chat: %w", err)
 	}
 
-	fileId, fileUniqueId, err := u.botApiFileId(posted.ID, item.Type)
+	fileId, err := botApiFileId(posted, item.Type)
 	if err != nil {
 		return err
 	}
 
 	err = u.cache.Save(ctx, &entity.MediaFileCache{
-		MemeId:       memeId,
-		Type:         item.Type,
-		FileId:       fileId,
-		FileUniqueId: fileUniqueId,
-		Size:         resp.ContentLength,
+		MemeId: memeId,
+		Type:   item.Type,
+		FileId: fileId,
+		Size:   resp.ContentLength,
 	})
 	if err != nil {
 		return err
@@ -175,7 +173,7 @@ func (u *ServiceChatUploaderImpl) upload(ctx context.Context, item entity.MemeSe
 
 // mediaOption returns how an uploaded file is posted: videos as streamable
 // video documents, images as photos.
-func (u *ServiceChatUploaderImpl) mediaOption(item entity.MemeSearchResult) (func(tg.InputFileClass) message.MediaOption, string, error) {
+func (u *BackgroundServiceChatUploaderImpl) mediaOption(item entity.MemeSearchResult) (func(tg.InputFileClass) message.MediaOption, string, error) {
 	caption := styling.Plain(item.Id)
 	switch item.Type {
 	case entity.ResultTypeVideo:
@@ -197,30 +195,69 @@ func (u *ServiceChatUploaderImpl) mediaOption(item entity.MemeSearchResult) (fun
 	return nil, "", fmt.Errorf("unsupported media type %q", item.Type)
 }
 
-// botApiFileId forwards the posted message within the service chat through
-// the Bot API, so Telegram itself issues the Bot API file_id, then deletes
-// the forwarded copy. The original post is kept: the file reference stays
-// valid while it exists.
-func (u *ServiceChatUploaderImpl) botApiFileId(messageId int, mediaType string) (string, string, error) {
-	forwarded, err := u.bot.Send(tgbotapi.NewForward(u.chatId, u.chatId, messageId))
-	if err != nil {
-		return "", "", fmt.Errorf("forward service chat message: %w", err)
-	}
-	if _, err := u.bot.Request(tgbotapi.NewDeleteMessage(u.chatId, forwarded.MessageID)); err != nil {
-		u.log.Warn("Failed to delete forwarded service chat message", "messageId", forwarded.MessageID, "error", err)
+// botApiFileId encodes the Bot API file_id of the media in the posted
+// service chat message. The post is kept: the file reference inside the
+// file_id stays valid while it exists.
+func botApiFileId(posted *tg.Message, mediaType string) (string, error) {
+	var fid fileid.FileID
+	switch media := posted.Media.(type) {
+	case *tg.MessageMediaDocument:
+		doc, ok := media.Document.AsNotEmpty()
+		if !ok || mediaType != entity.ResultTypeVideo {
+			return "", fmt.Errorf("service chat message %d: unexpected document for %s", posted.ID, mediaType)
+		}
+		fid = fileid.FromDocument(doc)
+		if fid.Type != fileid.Video {
+			return "", fmt.Errorf("service chat message %d: document is %s, not a video", posted.ID, fid.Type)
+		}
+	case *tg.MessageMediaPhoto:
+		photo, ok := media.Photo.(*tg.Photo)
+		if !ok || mediaType != entity.ResultTypeImage {
+			return "", fmt.Errorf("service chat message %d: unexpected photo for %s", posted.ID, mediaType)
+		}
+		thumbType, ok := largestPhotoSizeType(photo)
+		if !ok {
+			return "", fmt.Errorf("service chat message %d: photo has no sizes", posted.ID)
+		}
+		fid = fileid.FromPhoto(photo, thumbType)
+	default:
+		return "", fmt.Errorf("service chat message %d: unexpected media %T", posted.ID, posted.Media)
 	}
 
-	switch {
-	case mediaType == entity.ResultTypeVideo && forwarded.Video != nil:
-		return forwarded.Video.FileID, forwarded.Video.FileUniqueID, nil
-	case mediaType == entity.ResultTypeImage && len(forwarded.Photo) > 0:
-		largest := forwarded.Photo[len(forwarded.Photo)-1]
-		return largest.FileID, largest.FileUniqueID, nil
+	encoded, err := fileid.EncodeFileID(fid)
+	if err != nil {
+		return "", fmt.Errorf("service chat message %d: encode file id: %w", posted.ID, err)
 	}
-	return "", "", fmt.Errorf("forwarded service chat message %d has no %s", messageId, mediaType)
+	return encoded, nil
 }
 
-func (u *ServiceChatUploaderImpl) resolvePeer(ctx context.Context) (tg.InputPeerClass, error) {
+// largestPhotoSizeType returns the size type (e.g. 'y') of the biggest
+// variant of a photo; the Bot API file_id of a photo points to one size.
+func largestPhotoSizeType(photo *tg.Photo) (rune, bool) {
+	var sizeType string
+	maxArea := -1
+	for _, size := range photo.Sizes {
+		var w, h int
+		var typ string
+		switch s := size.(type) {
+		case *tg.PhotoSize:
+			w, h, typ = s.W, s.H, s.Type
+		case *tg.PhotoSizeProgressive:
+			w, h, typ = s.W, s.H, s.Type
+		default:
+			continue
+		}
+		if area := w * h; area > maxArea && typ != "" {
+			maxArea, sizeType = area, typ
+		}
+	}
+	if sizeType == "" {
+		return 0, false
+	}
+	return []rune(sizeType)[0], true
+}
+
+func (u *BackgroundServiceChatUploaderImpl) resolvePeer(ctx context.Context) (tg.InputPeerClass, error) {
 	u.peerMu.Lock()
 	defer u.peerMu.Unlock()
 	if u.peer != nil {
@@ -247,13 +284,11 @@ func (u *ServiceChatUploaderImpl) resolvePeer(ctx context.Context) (tg.InputPeer
 func NewServiceChatUploader(
 	lc fx.Lifecycle,
 	mtproto MtprotoClient,
-	bot *tgbotapi.BotAPI,
 	cache storage.MediaFileCacheStorage,
 	cfg *conf.Config,
-) ServiceChatUploader {
-	u := &ServiceChatUploaderImpl{
+) BackgroundServiceChatUploader {
+	u := &BackgroundServiceChatUploaderImpl{
 		mtproto: mtproto,
-		bot:     bot,
 		cache:   cache,
 		chatId:  cfg.Telegram.ServiceChatId,
 		log:     slog.With("service", "ServiceChatUploader"),

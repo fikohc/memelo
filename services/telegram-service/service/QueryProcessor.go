@@ -49,9 +49,9 @@ type InlineResultBuilder interface {
 }
 
 type InlineResultBuilderImpl struct {
-	cache    tgstorage.MediaFileCacheStorage
-	uploader ServiceChatUploader
-	log      *slog.Logger
+	cache              tgstorage.MediaFileCacheStorage
+	backgroundUploader BackgroundServiceChatUploader
+	log                *slog.Logger
 }
 
 func (b *InlineResultBuilderImpl) Build(ctx context.Context, results []entity.MemeSearchResult, mark string) ([]any, error) {
@@ -70,7 +70,7 @@ func (b *InlineResultBuilderImpl) Build(ctx context.Context, results []entity.Me
 
 			fileId, cached := fileIds[item.Id]
 			if !cached && (item.Type == entity.ResultTypeImage || item.Type == entity.ResultTypeVideo) {
-				b.uploader.Enqueue(item)
+				b.backgroundUploader.Enqueue(item)
 			}
 
 			switch item.Type {
@@ -141,11 +141,11 @@ func (b *InlineResultBuilderImpl) cachedFileIds(ctx context.Context, results []e
 	return fileIds
 }
 
-func NewInlineResultBuilder(cache tgstorage.MediaFileCacheStorage, uploader ServiceChatUploader) InlineResultBuilder {
+func NewInlineResultBuilder(cache tgstorage.MediaFileCacheStorage, uploader BackgroundServiceChatUploader) InlineResultBuilder {
 	return &InlineResultBuilderImpl{
-		cache:    cache,
-		uploader: uploader,
-		log:      slog.With("service", "InlineResultBuilder"),
+		cache:              cache,
+		backgroundUploader: uploader,
+		log:                slog.With("service", "InlineResultBuilder"),
 	}
 }
 
